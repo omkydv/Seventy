@@ -220,7 +220,7 @@ export async function HowSection() {
                 width={parking.width}
                 height={parking.height}
                 outlines={parkingDogs}
-                marks={parkingDogs.map((d) => ({ id: d.id, color: "#fff3e4" }))}
+                marks={parkingDogs.map((d, i) => ({ id: d.id, color: "#fff3e4", label: `Dog ${String(i + 1).padStart(2, "0")}` }))}
                 focus={{ x: 0.5, y: 0.62 }}
                 sizes="(min-width: 1024px) 60vw, 100vw"
                 drawOnView
