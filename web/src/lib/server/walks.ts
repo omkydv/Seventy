@@ -12,6 +12,7 @@ export type WalkInput = {
   mode: "plan" | "check";
   title?: string;
   areaName?: string;
+  country?: string;
   targetMark?: "vaccination" | "sterilization";
   markTypes?: string[];
   recordedAt?: string | null;
@@ -68,6 +69,7 @@ export async function createWalk(ws: Workspace, input: WalkInput) {
       mode: input.mode,
       title: input.title?.trim() || null,
       area_name: input.areaName?.trim() || null,
+      country: input.country ?? "Nepal",
       target_mark: input.targetMark ?? "vaccination",
       mark_types: input.markTypes?.length ? input.markTypes : ["paint"],
       recorded_at: input.recordedAt ?? null,

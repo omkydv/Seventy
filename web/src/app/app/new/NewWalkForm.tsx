@@ -22,6 +22,7 @@ export function NewWalkForm() {
   const [probe, setProbe] = useState<Probe | null>(null);
   const [probing, setProbing] = useState(false);
   const [area, setArea] = useState("");
+  const [country, setCountry] = useState("Nepal");
   const [mode, setMode] = useState<Mode>("plan");
   const [target, setTarget] = useState<Target>("vaccination");
   const [paint, setPaint] = useState(true);
@@ -69,6 +70,7 @@ export function NewWalkForm() {
         json: {
           mode,
           areaName: area || undefined,
+          country,
           title: area || undefined,
           targetMark: mode === "check" ? target : "vaccination",
           markTypes: mode === "check" && target === "vaccination" ? [paint && "paint", collar && "collar"].filter(Boolean) : ["paint"],
@@ -149,6 +151,23 @@ export function NewWalkForm() {
           className="mt-2 h-11 w-full max-w-md rounded-[8px] border border-line-strong bg-card px-3.5 text-base outline-none placeholder:text-ink-3 focus:border-ink"
         />
         <p className="mt-2 text-sm text-ink-3">Use the same name each time you walk a route, so walks can be compared.</p>
+      </div>
+
+      <div>
+        <label htmlFor={`${areaId}-country`} className="block text-sm font-semibold">
+          Country
+        </label>
+        <select
+          id={`${areaId}-country`}
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          className="mt-2 h-11 w-full max-w-xs rounded-[8px] border border-line-strong bg-card px-3 text-base outline-none focus:border-ink"
+        >
+          {["Nepal", "India", "Bangladesh", "Other"].map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+        <p className="mt-2 text-sm text-ink-3">The report cites this country’s rabies rules.</p>
       </div>
 
       <fieldset>

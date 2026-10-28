@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CoverageMeter } from "@/components/site/CoverageMeter";
 import { WalkReplay } from "@/components/WalkReplay";
+import { ReportPanel } from "./ReportPanel";
 import { api } from "@/lib/client/workspace";
 import { clock, plural } from "@/lib/format";
 import { TARGET } from "@/lib/stats";
@@ -268,6 +269,7 @@ export function Results({ state, onChange }: { state: WalkState; onChange: (s: W
           ))}
         </ul>
       </section>
+      <ReportPanel walkId={state.walk.id} owner={state.owner} />
     </>
   );
 }
