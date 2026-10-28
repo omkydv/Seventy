@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CoverageMeter } from "@/components/site/CoverageMeter";
+import { CoverageMeter } from "@/components/CoverageMeter";
 import { WalkReplay } from "@/components/WalkReplay";
 import { ReportPanel } from "./ReportPanel";
 import { api } from "@/lib/client/workspace";
