@@ -77,6 +77,24 @@
   color-scheme: dark;
 }
 
+/* Sections that always sit on light paper (photographic heroes), whatever the theme. */
+.tone-light {
+  --paper: #f4f0e7;
+  --paper-2: #ece6d9;
+  --paper-3: #e2dacb;
+  --card: #fbf8f1;
+  --line: #d6cdbb;
+  --line-strong: #bfb4a0;
+  --ink: #1b1914;
+  --ink-2: #4b463d;
+  --ink-3: #7a7365;
+  --accent: #d2441e;
+  --accent-hover: #bc3b18;
+  --accent-ink: #fff7f0;
+  --accent-soft: #f2dccf;
+  color-scheme: light;
+}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-paper-2: var(--paper-2);

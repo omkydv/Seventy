@@ -1,14 +1,15 @@
 /**
  * Check chunk stitching on real SAM output: run with
- *   npx tsx scripts/stitch-check.ts <dir with c000.txt, c001.txt…> <chunkSeconds> <overlap> <fps>
+ *   npx tsx scripts/stitch-check.ts <dir with c000.txt, c001.txt…> <chunkSeconds> <overlap> <fps> [out.json]
+ * With out.json, writes the dogs and their sample frames for tools/read_marks.py.
  */
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { compactTracks } from "../src/lib/sam/compact";
 import { pickSamples, stitchChunks, type ChunkInput } from "../src/lib/tracks";
 
 async function main() {
-  const [dir, chunkS = "10", overlapS = "2", fpsArg = "5"] = process.argv.slice(2);
+  const [dir, chunkS = "10", overlapS = "2", fpsArg = "5", outJson] = process.argv.slice(2);
   const files = readdirSync(dir).filter((f) => /^c\d+\.txt$/.test(f)).sort();
   const chunkSeconds = Number(chunkS);
   const overlap = Number(overlapS);
@@ -23,6 +24,18 @@ async function main() {
   }
   const dogs = stitchChunks(inputs);
   console.log(`\n${dogs.length} dogs after stitching`);
+  if (outJson) {
+    const out = dogs.map((d) => ({
+      label: d.label,
+      firstS: d.firstS,
+      lastS: d.lastS,
+      meanConf: d.meanConf,
+      segments: d.segments,
+      samples: pickSamples(d).map((s) => ({ t: s.t, box: s.box })),
+    }));
+    writeFileSync(outJson, JSON.stringify(out, null, 1));
+    console.log(`wrote ${outJson}`);
+  }
   for (const d of dogs) {
     const samples = pickSamples(d);
     console.log(
