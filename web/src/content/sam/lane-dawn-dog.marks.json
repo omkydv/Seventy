@@ -1,0 +1,14 @@
+{
+  "model": "muse-spark-1.3",
+  "reading": {
+    "coat": "solid black short-coated medium dog",
+    "collar": { "color": null, "status": "absent" },
+    "confidence": 0.65,
+    "ear_notch": { "side": null, "status": "absent" },
+    "is_dog": true,
+    "paint": { "color": null, "location": null, "status": "absent" },
+    "reason": "Backlit silhouette shows no paint patch, no collar, and an intact pointed ear tip.",
+    "view_quality": "fair"
+  },
+  "seconds": 9.2
+}

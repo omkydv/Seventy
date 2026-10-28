@@ -1,0 +1,32 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# deps and builds
+node_modules/
+.next/
+out/
+dist/
+.vercel/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# local media and working data
+data/
+media/
+*.mp4
+*.mov
+*.MOV
+*.webm
+*.jpg
+*.jpeg
+*.png
+!web/public/**/*.jpg
+!web/public/**/*.png
+
+# os
+.DS_Store
+Thumbs.db

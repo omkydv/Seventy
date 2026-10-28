@@ -1,0 +1,258 @@
+@import "tailwindcss";
+
+/* Seventy design tokens.
+   Paper and ink are warm; the one accent is vermilion, the colour of the
+   livestock marking paint vaccination teams spray on dogs. */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --paper: #f4f0e7;
+  --paper-2: #ece6d9;
+  --paper-3: #e2dacb;
+  --card: #fbf8f1;
+  --line: #d6cdbb;
+  --line-strong: #bfb4a0;
+  --ink: #1b1914;
+  --ink-2: #4b463d;
+  --ink-3: #7a7365;
+  --accent: #d2441e;
+  --accent-hover: #bc3b18;
+  --accent-ink: #fff7f0;
+  --accent-soft: #f2dccf;
+  --ok: #2e6a4e;
+  --ok-soft: #d7e6dc;
+  --warn: #a96c12;
+  --warn-soft: #f1e1c4;
+  --focus: #1f5fd1;
+  --shadow-ink: 27 25 20;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #13120f;
+    --paper-2: #1b1a16;
+    --paper-3: #24221d;
+    --card: #1e1c18;
+    --line: #34312a;
+    --line-strong: #4a463d;
+    --ink: #eee8dc;
+    --ink-2: #bdb5a6;
+    --ink-3: #8c8476;
+    --accent: #ef653d;
+    --accent-hover: #f57a55;
+    --accent-ink: #1b0d07;
+    --accent-soft: #3a1f15;
+    --ok: #63b08a;
+    --ok-soft: #17291f;
+    --warn: #e0a548;
+    --warn-soft: #2e2313;
+    --focus: #7aa7ff;
+    --shadow-ink: 0 0 0;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #13120f;
+  --paper-2: #1b1a16;
+  --paper-3: #24221d;
+  --card: #1e1c18;
+  --line: #34312a;
+  --line-strong: #4a463d;
+  --ink: #eee8dc;
+  --ink-2: #bdb5a6;
+  --ink-3: #8c8476;
+  --accent: #ef653d;
+  --accent-hover: #f57a55;
+  --accent-ink: #1b0d07;
+  --accent-soft: #3a1f15;
+  --ok: #63b08a;
+  --ok-soft: #17291f;
+  --warn: #e0a548;
+  --warn-soft: #2e2313;
+  --focus: #7aa7ff;
+  --shadow-ink: 0 0 0;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-focus: var(--focus);
+
+  --font-display: var(--font-newsreader), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.35rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.55rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.8rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.35rem;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 2.75rem;
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 3.1rem;
+  --text-6xl: 4rem;
+  --text-6xl--line-height: 4rem;
+  --text-7xl: 5rem;
+  --text-7xl--line-height: 5rem;
+  --text-8xl: 6.5rem;
+  --text-8xl--line-height: 6.25rem;
+
+  --ease-out-field: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --radius-ctl: 8px;
+}
+
+@layer base {
+  html {
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  img, video, canvas {
+    max-width: 100%;
+  }
+}
+
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: 1320px;
+    margin-inline: auto;
+    padding-inline: clamp(16px, 4vw, 40px);
+  }
+  .display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 400;
+    letter-spacing: -0.028em;
+    line-height: 1;
+  }
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .num {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--line);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 44px;
+    padding-inline: 1.125rem;
+    border-radius: var(--radius-ctl);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: -0.005em;
+    transition: background-color 160ms var(--ease-out-field), color 160ms var(--ease-out-field), border-color 160ms var(--ease-out-field);
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+  }
+  .btn-quiet {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+  }
+  .btn-quiet:hover {
+    background: var(--paper-2);
+  }
+  .btn-on-photo {
+    background: rgb(20 18 14 / 0.42);
+    color: #f6f1e7;
+    border: 1px solid rgb(246 241 231 / 0.38);
+    backdrop-filter: blur(6px);
+  }
+  .btn-on-photo:hover {
+    background: rgb(20 18 14 / 0.58);
+  }
+  .link {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    text-decoration-color: var(--line-strong);
+    transition: text-decoration-color 160ms var(--ease-out-field);
+  }
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
