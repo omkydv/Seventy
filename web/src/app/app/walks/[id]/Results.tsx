@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CoverageMeter } from "@/components/site/CoverageMeter";
+import { WalkReplay } from "@/components/WalkReplay";
 import { api } from "@/lib/client/workspace";
 import { clock, plural } from "@/lib/format";
 import { TARGET } from "@/lib/stats";
@@ -199,6 +200,29 @@ function Timeline({ state }: { state: WalkState }) {
   );
 }
 
+function Replay({ state }: { state: WalkState }) {
+  const media = state.media?.chunks ?? [];
+  const chunks = state.chunks
+    .map((c) => {
+      const m = media.find((x) => x.idx === c.idx);
+      return m?.video && m.sam ? { idx: c.idx, startS: c.start_s, video: m.video, sam: m.sam } : null;
+    })
+    .filter((c): c is NonNullable<typeof c> => c != null);
+  if (!chunks.length) return null;
+  const dogs = state.dogs.map((d) => ({ label: d.label, status: effectiveStatus(d), segments: d.segments ?? [] }));
+  return (
+    <section className="mt-12">
+      <div className="mb-3 flex items-baseline justify-between">
+        <p className="label">The walk, as SAM 3.1 tracked it</p>
+        <p className="label">
+          <span className="text-accent">●</span> marked <span className="ml-2">○</span> unmarked
+        </p>
+      </div>
+      <WalkReplay chunks={chunks} dogs={dogs} />
+    </section>
+  );
+}
+
 export function Results({ state, onChange }: { state: WalkState; onChange: (s: WalkState) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const target = state.walk.target_mark;
@@ -224,6 +248,7 @@ export function Results({ state, onChange }: { state: WalkState; onChange: (s: W
           their marks. Look at each close-up and choose what you see.
         </p>
       )}
+      <Replay state={state} />
       <Timeline state={state} />
       <section className="mt-12">
         <div className="flex items-baseline justify-between border-b border-ink pb-3">

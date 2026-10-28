@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { clock } from "@/lib/format";
 import type { Chunk, WalkState } from "@/lib/types";
 
 export type LocalStage = {
@@ -38,7 +39,7 @@ function ChunkCell({ c, now }: { c: Chunk; now: number }) {
   return (
     <li className={`rounded-[6px] border px-3 py-2.5 transition-colors duration-300 ${tone}`}>
       <p className="label num" style={{ color: "inherit" }}>
-        Minute {c.idx + 1}
+        {clock(c.start_s).replace(/\.\d$/, "")}–{clock(c.end_s).replace(/\.\d$/, "")}
       </p>
       <p className="num mt-1 text-sm">
         {c.status === "done" && `${c.objects ?? 0} ${c.objects === 1 ? "dog" : "dogs"} · ${secs}s`}
@@ -66,9 +67,9 @@ export function Pipeline({ state, local }: { state: WalkState; local: LocalStage
       who: "Browser",
       detail:
         local?.kind === "preparing"
-          ? `Minute ${local.chunk + 1} of ${chunks.length}, ${Math.round(local.progress * 100)}%`
+          ? `Piece ${local.index + 1} of ${local.total}, ${Math.round(local.progress * 100)}%`
           : submitted
-            ? `${submitted} of ${chunks.length} minutes sent`
+            ? `${submitted} of ${chunks.length} pieces sent`
             : undefined,
       state: at > 0 || (walk.status === "uploading" && submitted === chunks.length) ? "done" : "now",
     },
@@ -76,12 +77,12 @@ export function Pipeline({ state, local }: { state: WalkState; local: LocalStage
       key: "track",
       name: "Track every dog",
       who: "SAM 3.1",
-      detail: at >= 1 ? `${tracked} of ${chunks.length} minutes tracked` : undefined,
+      detail: at >= 1 ? `${tracked} of ${chunks.length} pieces tracked` : undefined,
       state: at > 1 ? "done" : at === 1 || (at === 0 && submitted > 0) ? "now" : "next",
     },
     {
       key: "join",
-      name: "Join the minutes into one count",
+      name: "Join the pieces into one count",
       who: "Seventy",
       detail: at > 2 ? `${dogs.length} different dogs` : undefined,
       state: at > 2 ? "done" : at === 2 ? "now" : "next",
@@ -136,14 +137,14 @@ export function Pipeline({ state, local }: { state: WalkState; local: LocalStage
         ))}
       </ol>
       <div className="col-span-12 lg:col-span-6 lg:col-start-7">
-        <p className="label mb-3">The walk, minute by minute</p>
+        <p className="label mb-3">The walk, thirty seconds at a time</p>
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {chunks.map((c) => (
             <ChunkCell key={c.idx} c={c} now={now} />
           ))}
         </ul>
         <p className="mt-4 text-sm text-ink-3">
-          Each minute is tracked separately and at the same time. Minutes overlap by two seconds, so a dog crossing from
+          Each piece is tracked separately and at the same time. Pieces overlap by two seconds, so a dog crossing from
           one into the next is matched and counted once.
         </p>
       </div>

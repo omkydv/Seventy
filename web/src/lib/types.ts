@@ -54,6 +54,7 @@ export type Dog = {
   last_s: number;
   frames: number;
   mean_conf: number | null;
+  segments: { chunk: number; objectId: string }[];
   samples: { t: number; box: [number, number, number, number] }[];
   crops: { path: string; t: number; sharpness?: number }[];
   mark: (MarkReading & { error?: string; skipped?: boolean }) | null;

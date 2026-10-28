@@ -91,7 +91,7 @@ export function NewWalkForm() {
   }
 
   const frames = probe ? Math.round(probe.durationS * FPS) : 0;
-  const minutes = probe ? Math.max(1, Math.ceil(probe.durationS / 60)) : 0;
+  const pieces = probe ? Math.max(1, Math.ceil(probe.durationS / 30)) : 0;
 
   return (
     <form onSubmit={submit} className="mt-10 space-y-10" noValidate>
@@ -130,7 +130,7 @@ export function NewWalkForm() {
         />
         {probe && !error && (
           <p className="num mt-3 text-sm text-ink-2">
-            Seventy will send {frames.toLocaleString("en-US")} frames in {minutes} {minutes === 1 ? "piece" : "pieces"}, tracked in
+            Seventy will send {frames.toLocaleString("en-US")} frames in {pieces} {pieces === 1 ? "piece" : "pieces"}, tracked in
             parallel.
           </p>
         )}

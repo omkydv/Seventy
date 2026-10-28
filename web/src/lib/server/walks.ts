@@ -77,7 +77,7 @@ export async function createWalk(ws: Workspace, input: WalkInput) {
       src_fps: input.srcFps ?? null,
       source_name: input.sourceName ?? null,
       proc_fps: procFps,
-      chunk_seconds: input.chunkSeconds ?? 60,
+      chunk_seconds: input.chunkSeconds ?? 30,
       overlap_seconds: OVERLAP_S,
       status: "uploading",
       progress: { stage: "uploading" },
@@ -86,7 +86,7 @@ export async function createWalk(ws: Workspace, input: WalkInput) {
     .single();
   if (error || !walk) throw new Error(`Could not create walk: ${error?.message}`);
 
-  const plan = planChunks(input.durationS, input.chunkSeconds ?? 60);
+  const plan = planChunks(input.durationS, input.chunkSeconds ?? 30);
   const rows = plan.map((c) => ({
     walk_id: walk.id,
     idx: c.idx,
@@ -96,7 +96,6 @@ export async function createWalk(ws: Workspace, input: WalkInput) {
   }));
   const { error: chunkErr } = await db().from("chunks").insert(rows);
   if (chunkErr) throw new Error(`Could not plan chunks: ${chunkErr.message}`);
-  await db().from("walks").update({ chunk_seconds: input.chunkSeconds ?? 60 }).eq("id", walk.id);
 
   const uploads = await Promise.all(rows.map(async (r) => ({ idx: r.idx, ...(await signedUploadUrl(r.storage_path)) })));
   return { walk, chunks: plan, uploads };
@@ -306,7 +305,7 @@ export async function state(walkId: string) {
   const [{ data: walk }, { data: chunks }, { data: dogs }] = await Promise.all([
     db().from("walks").select("*").eq("id", walkId).single(),
     db().from("chunks").select("idx, start_s, end_s, status, frames, objects, error, submitted_at, completed_at, tracks_path").eq("walk_id", walkId).order("idx"),
-    db().from("dogs").select("id, label, first_s, last_s, frames, mean_conf, samples, crops, best_crop, mark, mark_status, mark_kind, review_status, reading_ms").eq("walk_id", walkId).order("label"),
+    db().from("dogs").select("id, label, first_s, last_s, frames, mean_conf, segments, samples, crops, best_crop, mark, mark_status, mark_kind, review_status, reading_ms").eq("walk_id", walkId).order("label"),
   ]);
   return { walk, chunks: chunks ?? [], dogs: dogs ?? [] };
 }
