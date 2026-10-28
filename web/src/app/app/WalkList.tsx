@@ -2,52 +2,72 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DogGlyph } from "@/components/DogGlyph";
 import { api, ensureWorkspace } from "@/lib/client/workspace";
-import { day, duration } from "@/lib/format";
+import { day, duration, plural } from "@/lib/format";
 import type { Walk } from "@/lib/types";
 
 type Row = Pick<Walk, "id" | "title" | "area_name" | "mode" | "target_mark" | "status" | "duration_s" | "recorded_at" | "created_at" | "stats">;
 
-const STAGE: Record<string, string> = {
+const IN_PROGRESS: Record<string, string> = {
+  created: "Starting",
   uploading: "Uploading",
-  tracking: "Tracking dogs",
-  stitching: "Joining minutes",
+  tracking: "Counting dogs",
+  stitching: "Counting dogs",
   needs_crops: "Waiting for close-ups",
   reading: "Reading marks",
-  review: "Needs review",
-  done: "Done",
-  failed: "Failed",
-  created: "Starting",
+  failed: "Stopped",
 };
 
-function Result({ w }: { w: Row }) {
+function Summary({ w }: { w: Row }) {
   const st = w.stats;
-  if (!st) return <span className="text-ink-3">{STAGE[w.status]}</span>;
-  if (w.mode === "plan") return <span className="num">{st.dogs} dogs</span>;
+  if (!st) return <span className="text-ink-3">{IN_PROGRESS[w.status] ?? "In progress"}</span>;
+  if (w.mode === "plan") return <span className="num font-semibold">{plural(st.dogs, "dog")}</span>;
+  if (st.status === "insufficient") return <span className="pill bg-canvas-2 text-ink">Too few dogs to call</span>;
   return (
-    <span className="num">
-      <span className={st.status === "below" ? "text-warn" : "text-ink"}>{(st.ci.p * 100).toFixed(0)}%</span>
-      <span className="text-ink-3"> of {st.readable} readable</span>
+    <span className={`pill num text-ink ${st.status === "below" ? "bg-amber-soft" : "bg-mark-soft"}`}>
+      {(st.ci.p * 100).toFixed(0)}% {w.target_mark === "sterilization" ? "sterilized" : "vaccinated"}
     </span>
   );
 }
 
-function Table({ rows, empty }: { rows: Row[]; empty: React.ReactNode }) {
-  if (!rows.length) return <div className="border-t border-line py-6 text-ink-2">{empty}</div>;
+function Strip({ w }: { w: Row }) {
+  const st = w.stats;
+  const n = Math.min(12, st?.dogs ?? 0);
+  if (!st || !n) return <span className="flex gap-1" aria-hidden><DogGlyph status="empty" size={22} /><DogGlyph status="empty" size={22} /><DogGlyph status="empty" size={22} /></span>;
+  // Up to twelve dogs in the walk's proportions: marked first, unreadable last.
+  const marked = Math.round((st.marked / st.dogs) * n);
+  const unknown = Math.min(n - marked, Math.round((st.unknown / st.dogs) * n));
   return (
-    <ul className="border-t border-ink">
+    <span className="flex gap-1" aria-hidden>
+      {Array.from({ length: n }, (_, i) => (
+        <DogGlyph key={i} status={i < marked ? "marked" : i >= n - unknown ? "unknown" : "unmarked"} size={22} />
+      ))}
+    </span>
+  );
+}
+
+function List({ rows }: { rows: Row[] }) {
+  return (
+    <ul className="panel divide-y divide-line overflow-hidden">
       {rows.map((w) => (
         <li key={w.id}>
           <Link
             href={`/app/walks/${w.id}`}
-            className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 border-b border-line py-4 transition-colors hover:bg-paper-2 sm:grid-cols-[1fr_8rem_8rem_10rem]"
+            className="grid grid-cols-1 items-center gap-x-6 gap-y-2 px-5 py-5 transition-colors hover:bg-surface-2 sm:grid-cols-[1fr_auto] md:grid-cols-[minmax(0,1fr)_17rem_11rem] md:px-7"
           >
-            <span className="font-semibold">{w.area_name || w.title || "Untitled walk"}</span>
-            <span className="label sm:order-none">{w.mode === "plan" ? "Plan" : "Check"}</span>
-            <span className="num text-sm text-ink-2">{duration(w.duration_s)}</span>
-            <span className="text-right text-sm">
-              <Result w={w} />
-              <span className="block text-xs text-ink-3">{day(w.recorded_at ?? w.created_at)}</span>
+            <span className="min-w-0">
+              <span className="block truncate text-lg font-semibold tracking-[-0.01em]">{w.area_name || w.title || "Untitled walk"}</span>
+              <span className="block text-[0.9375rem] text-ink-3">
+                {w.mode === "plan" ? "Plan" : w.target_mark === "sterilization" ? "Check, sterilization" : "Check, vaccination"}, {duration(w.duration_s)},{" "}
+                {day(w.recorded_at ?? w.created_at)}
+              </span>
+            </span>
+            <span className="hidden md:block">
+              <Strip w={w} />
+            </span>
+            <span className="text-left sm:text-right">
+              <Summary w={w} />
             </span>
           </Link>
         </li>
@@ -64,33 +84,56 @@ export function WalkList() {
     ensureWorkspace()
       .then(() => api<{ mine: Row[]; samples: Row[] }>("/api/walks"))
       .then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : "Couldn’t load walks."));
+      .catch((e) => setError(e instanceof Error ? e.message : "Surveys couldn’t be loaded."));
   }, []);
 
-  if (error) return <p className="mt-8 text-ink-2">{error}</p>;
-  if (!data) return <p className="label mt-10">Loading</p>;
+  if (error) return <p className="mt-10 text-ink-2">{error}</p>;
+  if (!data) return <div className="panel mt-10 h-40 animate-pulse" aria-label="Loading surveys" />;
 
   return (
     <div className="mt-10 space-y-16">
-      <section>
-        <Table
-          rows={data.mine}
-          empty={
-            <>
-              No walks yet.{" "}
-              <Link href="/app/new" className="link text-ink">
-                Add your first walk
+      <section aria-labelledby="mine">
+        <h2 id="mine" className="sr-only">
+          Your surveys
+        </h2>
+        {data.mine.length ? (
+          <List rows={data.mine} />
+        ) : (
+          <div className="panel flex flex-col items-start gap-6 p-8 md:flex-row md:items-center md:justify-between md:p-10">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
+              <span className="flex shrink-0 gap-1.5" aria-hidden>
+                <DogGlyph status="unmarked" size={34} />
+                <DogGlyph status="marked" size={34} />
+                <DogGlyph status="unknown" size={34} />
+              </span>
+              <div>
+                <p className="text-xl font-semibold tracking-[-0.01em]">No surveys yet</p>
+                <p className="mt-1 text-ink-2">Film a slow walk through an area, then add the video here.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/app/new" className="btn btn-primary">
+                New survey
               </Link>
-              , or open a sample survey below.
-            </>
-          }
-        />
+              <Link href="/app/demo" className="btn btn-secondary">
+                See a sample survey
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
-      <section>
-        <h2 className="display text-3xl">Sample surveys</h2>
-        <p className="mt-2 max-w-xl text-ink-2">Real walks processed by Seventy, open to everyone.</p>
+
+      <section aria-labelledby="samples">
+        <h2 id="samples" className="display-quiet text-2xl md:text-3xl">
+          Sample surveys
+        </h2>
+        <p className="mt-2 max-w-xl text-ink-2">Real walks counted by Seventy, open to everyone.</p>
         <div className="mt-6">
-          <Table rows={data.samples} empty="Sample surveys appear here once they are processed." />
+          {data.samples.length ? (
+            <List rows={data.samples} />
+          ) : (
+            <p className="panel p-6 text-ink-2">Sample surveys appear here once they have been counted.</p>
+          )}
         </div>
       </section>
     </div>

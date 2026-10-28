@@ -35,7 +35,7 @@ export function Evidence() {
   return (
     <section id="evidence" className="scroll-mt-6 bg-surface py-28 md:py-40">
       <div className="shell">
-        <div className="grid grid-cols-12 gap-x-8 gap-y-10">
+        <div className="grid grid-cols-12 gap-y-10 lg:gap-x-8">
           <div className="col-span-12 lg:col-span-5">
             <h2 className="display text-4xl md:text-[4rem] md:leading-[1.03]">Every number on the screen is a measurement.</h2>
           </div>

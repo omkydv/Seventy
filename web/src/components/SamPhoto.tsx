@@ -39,7 +39,37 @@ type Props = {
   children?: ReactNode;
 };
 
-type Fit = { x: number; y: number; w: number; h: number };
+type Fit = { x: number; y: number; w: number; h: number; cw: number; ch: number };
+
+type Placed = { dx: number; dy: number };
+
+/**
+ * Keep labels apart and inside the visible frame. Widths are estimated from
+ * the text at 13px semibold; each label that collides with one already placed
+ * moves up above it.
+ */
+function placeLabels(items: { id: string; x: number; y: number; text: string }[], fit: Fit): Map<string, Placed> {
+  const out = new Map<string, Placed>();
+  const placed: { l: number; r: number; t: number; b: number }[] = [];
+  const h = 26;
+  for (const it of [...items].sort((a, b) => b.y - a.y)) {
+    const w = 22 + it.text.length * 7.1;
+    let l = it.x - w / 2;
+    const minL = -fit.x + 6;
+    const maxR = -fit.x + fit.cw - 6;
+    const dx = l < minL ? minL - l : l + w > maxR ? maxR - (l + w) : 0;
+    l += dx;
+    let b = it.y - 10;
+    for (let pass = 0; pass < 6; pass++) {
+      const hit = placed.find((q) => l < q.r + 4 && l + w > q.l - 4 && b > q.t - 4 && b - h < q.b + 4);
+      if (!hit) break;
+      b = hit.t - 4;
+    }
+    placed.push({ l, r: l + w, t: b - h, b });
+    out.set(it.id, { dx, dy: it.y - 10 - b });
+  }
+  return out;
+}
 
 const useIsoLayout = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
@@ -74,7 +104,7 @@ export function SamPhoto({
       const scale = Math.max(cw / width, ch / height);
       const w = width * scale;
       const h = height * scale;
-      setFit({ x: (cw - w) * focus.x, y: (ch - h) * focus.y, w, h });
+      setFit({ x: (cw - w) * focus.x, y: (ch - h) * focus.y, w, h, cw, ch });
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -109,6 +139,22 @@ export function SamPhoto({
   }, [fit, drawn, delay, drawOnView]);
 
   const markById = new Map(marks.map((m) => [m.id, m]));
+  const labelText = (o: Outline) => {
+    const mark = markById.get(o.id);
+    if (!mark?.label) return null;
+    const extra = mark.detail ?? (o.confidence != null ? o.confidence.toFixed(2) : "");
+    return extra ? `${mark.label}  ${extra}` : mark.label;
+  };
+  const offsets =
+    fit && showLabels
+      ? placeLabels(
+          outlines.flatMap((o) => {
+            const text = labelText(o);
+            return text ? [{ id: o.id, x: (o.anchor.x / width) * fit.w, y: (o.anchor.y / height) * fit.h, text }] : [];
+          }),
+          fit,
+        )
+      : new Map<string, Placed>();
   const project: Project = (x, y) => (fit ? { x: fit.x + (x / width) * fit.w, y: fit.y + (y / height) * fit.h } : { x: 0, y: 0 });
 
   return (
@@ -162,6 +208,7 @@ export function SamPhoto({
             outlines.map((o, i) => {
               const mark = markById.get(o.id);
               if (!mark?.label) return null;
+              const off = offsets.get(o.id) ?? { dx: 0, dy: 0 };
               return (
                 <span
                   key={o.id}
@@ -170,7 +217,7 @@ export function SamPhoto({
                     left: `${(o.anchor.x / width) * 100}%`,
                     top: `${(o.anchor.y / height) * 100}%`,
                     opacity: drawn ? 1 : 0,
-                    transform: `translate(-50%, ${drawn ? "calc(-100% - 10px)" : "calc(-100% - 4px)"})`,
+                    transform: `translate(calc(-50% + ${off.dx}px), ${drawn ? `calc(-100% - ${10 + off.dy}px)` : `calc(-100% - ${4 + off.dy}px)`})`,
                     transition: `opacity 420ms var(--ease-out-quint) ${1000 + i * 240}ms, transform 420ms var(--ease-out-quint) ${1000 + i * 240}ms`,
                   }}
                 >

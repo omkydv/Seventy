@@ -77,7 +77,7 @@ export function Clipboard() {
     <section className="bg-surface py-28 md:py-40">
       <div className="shell">
         <div className="max-w-4xl">
-          <h2 className="display text-4xl md:text-[4.25rem] md:leading-[1.02]">Every vaccination drive ends with one question: did we reach 70?</h2>
+          <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Every vaccination drive ends with one question: did we reach 70?</h2>
           <p className="lede mt-8 max-w-2xl">
             Today the answer comes from surveyors walking the streets with a tally sheet, a day or two after the drive,
             counting dogs with a paint mark and dogs without one. The method is sound. Doing it by hand is not.
@@ -85,7 +85,7 @@ export function Clipboard() {
         </div>
         <div className="mt-20 grid grid-cols-1 gap-x-12 gap-y-14 md:grid-cols-2">
           {failures.map((f) => (
-            <div key={f.title} className="grid grid-cols-[6rem_1fr] items-start gap-x-6">
+            <div key={f.title} className="grid grid-cols-1 items-start gap-x-6 gap-y-4 sm:grid-cols-[6rem_1fr]">
               <div className="flex h-14 items-end">{f.art}</div>
               <div>
                 <h3 className="text-xl font-semibold tracking-[-0.015em]" style={{ fontStretch: "106%" }}>

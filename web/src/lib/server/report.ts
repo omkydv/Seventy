@@ -55,7 +55,7 @@ export function factsFor(walk: Record<string, unknown>, stats: Record<string, un
   const ci = (stats?.ci ?? {}) as { p?: number; low?: number; high?: number };
   return {
     area: walk.area_name ?? walk.title ?? "unnamed route",
-    country: walk.country ?? "Nepal",
+    country: walk.country && walk.country !== "Not given" ? walk.country : "not given; use WHO global guidance",
     date: walk.recorded_at ?? walk.created_at,
     walk_minutes: walk.duration_s ? Math.round((Number(walk.duration_s) / 60) * 10) / 10 : null,
     mode: walk.mode === "plan" ? "plan (before a vaccination drive)" : "check (after a drive)",

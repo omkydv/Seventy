@@ -6,11 +6,10 @@ export function duration(seconds: number | null | undefined): string {
   return m ? `${m} min ${String(r).padStart(2, "0")} s` : `${r} s`;
 }
 
+/** A moment in the walk as m:ss. */
 export function clock(seconds: number): string {
-  const s = Math.max(0, seconds);
-  const m = Math.floor(s / 60);
-  const r = s - m * 60;
-  return `${m}:${r.toFixed(1).padStart(4, "0")}`;
+  const s = Math.max(0, Math.round(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export function day(iso: string | null | undefined): string {

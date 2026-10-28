@@ -22,7 +22,7 @@ export function Teams() {
     <section className="bg-canvas py-28 md:py-40">
       <div className="shell">
         <div className="max-w-3xl">
-          <h2 className="display text-4xl md:text-[4.25rem] md:leading-[1.02]">Made for the teams who vaccinate dogs.</h2>
+          <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Made for the teams who vaccinate dogs.</h2>
           <p className="lede mt-8 max-w-2xl">
             City veterinary departments, health ministries and the charities that run vaccination drives, in the more than
             150 countries where dog rabies still kills.

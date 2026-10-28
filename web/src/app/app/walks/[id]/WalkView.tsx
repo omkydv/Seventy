@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { recallFile, rememberFile } from "@/lib/client/files";
 import { uploadSigned } from "@/lib/client/storage";
@@ -29,7 +30,9 @@ export function WalkView({ id }: { id: string }) {
   }, [id]);
 
   useEffect(() => {
+    // Sample surveys open without a workspace, so a failed workspace call must not block reading.
     ensureWorkspace()
+      .catch(() => null)
       .then(load)
       .catch((e) => setLoadError(e instanceof Error ? e.message : "Couldn’t load this walk."));
   }, [load]);
@@ -187,53 +190,58 @@ export function WalkView({ id }: { id: string }) {
   if (loadError) {
     return (
       <main className="shell py-16">
-        <p className="label">Walk</p>
-        <h1 className="display mt-3 text-4xl">This walk couldn’t be opened.</h1>
-        <p className="mt-4 text-ink-2">{loadError}</p>
+        <h1 className="display text-4xl">This survey couldn’t be opened.</h1>
+        <p className="mt-4 text-lg text-ink-2">{loadError}</p>
+        <Link href="/app" className="btn btn-secondary mt-8">
+          Back to surveys
+        </Link>
       </main>
     );
   }
   if (!s) {
     return (
-      <main className="shell py-16">
-        <p className="label">Loading the walk</p>
+      <main className="shell py-16" aria-busy>
+        <div className="h-12 w-72 animate-pulse rounded-xl bg-canvas-2" />
+        <div className="panel mt-10 h-72 animate-pulse" />
       </main>
     );
   }
 
   const w = s.walk;
   const processing = !["review", "done", "failed"].includes(w.status);
+  const kind = w.mode === "plan" ? "Plan" : w.target_mark === "sterilization" ? "Check, sterilization" : "Check, vaccination";
   return (
-    <main className="shell pb-24 pt-10 md:pt-14">
-      <header className="grid grid-cols-12 gap-x-6 gap-y-3 border-b border-line pb-8">
-        <div className="col-span-12 md:col-span-8">
-          <p className="label">
-            {w.mode === "plan" ? "Plan" : w.target_mark === "sterilization" ? "Check · sterilization" : "Check · vaccination"}
-            {w.recorded_at ? ` · ${day(w.recorded_at)}` : ` · ${day(w.created_at)}`}
-          </p>
-          <h1 className="display mt-3 text-5xl md:text-6xl">{w.area_name || w.title || "Untitled walk"}</h1>
-        </div>
-        <div className="col-span-12 self-end text-sm text-ink-2 md:col-span-4 md:text-right">
-          <span className="num">{duration(w.duration_s)} of video</span>
-          {s.dogs.length > 0 && <span className="num"> · {s.dogs.length} dogs tracked</span>}
-        </div>
+    <main className="shell pb-28 pt-8 md:pt-12">
+      <Link href="/app" className="text-[0.9375rem] font-medium text-ink-2 hover:text-ink">
+        Surveys
+      </Link>
+      <header className="mt-3 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <h1 className="display text-4xl md:text-[3.5rem]">{w.area_name || w.title || "Untitled walk"}</h1>
+        <p className="num pb-2 text-[0.9375rem] text-ink-2">
+          {kind}, {day(w.recorded_at ?? w.created_at)}, {duration(w.duration_s)} of video
+        </p>
       </header>
 
       {needFile && owner && (
-        <div className="mt-8 rounded-[8px] border border-line-strong bg-card p-5">
-          <p className="font-semibold">This walk’s video isn’t open on this device.</p>
-          <p className="mt-1 text-sm text-ink-2">Choose the same file to continue. The original never leaves your device.</p>
-          <input type="file" accept="video/*" className="mt-4 text-sm" onChange={(e) => reopen(e.target.files?.[0])} />
+        <div className="panel mt-8 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-lg font-semibold">This walk’s video isn’t open on this device.</p>
+            <p className="mt-1 text-ink-2">Choose the same file to carry on. The original never leaves the device.</p>
+          </div>
+          <label className="btn btn-primary cursor-pointer">
+            Choose the video
+            <input type="file" accept="video/*" className="sr-only" onChange={(e) => reopen(e.target.files?.[0])} />
+          </label>
         </div>
       )}
       {workError && (
-        <p role="alert" className="mt-8 rounded-[8px] border border-warn/40 bg-warn-soft px-4 py-3 text-sm">
+        <p role="alert" className="mt-8 rounded-[14px] bg-amber-soft px-5 py-4 text-[0.9375rem]">
           {workError}
         </p>
       )}
       {w.status === "failed" && (
-        <p role="alert" className="mt-8 rounded-[8px] border border-warn/40 bg-warn-soft px-4 py-3 text-sm">
-          {w.error ?? "Processing failed."}
+        <p role="alert" className="mt-8 rounded-[14px] bg-amber-soft px-5 py-4 text-[0.9375rem]">
+          {w.error ?? "Counting stopped. Try adding the walk again."}
         </p>
       )}
 

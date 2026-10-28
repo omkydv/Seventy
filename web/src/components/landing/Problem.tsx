@@ -13,9 +13,9 @@ export function Problem() {
   return (
     <section id="problem" className="scroll-mt-6 bg-canvas py-28 md:py-40">
       <div className="shell">
-        <div className="grid grid-cols-12 gap-x-8 gap-y-16">
+        <div className="grid grid-cols-12 gap-y-16 lg:gap-x-8">
           <div className="col-span-12 lg:col-span-6">
-            <h2 className="display text-4xl md:text-[4.25rem] md:leading-[1.02]">Rabies kills 59,000 people every year.</h2>
+            <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Rabies kills 59,000 people every year.</h2>
             <p className="lede mt-8 max-w-xl">
               Four in ten are children. Almost every case starts with a dog bite, and every death is preventable: once
               symptoms begin, rabies is almost always fatal, but a vaccinated dog cannot pass it on.

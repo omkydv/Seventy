@@ -1,26 +1,30 @@
 "use client";
 
-import { SegmentationRenderer } from "@meta-sam/graphics";
+import { SegmentationRenderer, type VideoFrameCompositionContext } from "@meta-sam/graphics";
+import { frameIndexOf, recordsOfKind } from "@meta-sam/parser";
 import { createMediaPlayer, type IMediaPlayer } from "@meta-sam/video";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { parseVideoText } from "@/lib/sam/protocol";
 import { clock } from "@/lib/format";
 
 export type ReplayChunk = { idx: number; startS: number; video: string; sam: string };
 export type ReplayDog = { label: number; status: string; segments: { chunk: number; objectId: string }[] };
 
-const COLOR: Record<string, string> = {
-  marked: "#e0562e",
-  unmarked: "#f4efe5",
-  unknown: "#b5ab9a",
-  not_a_dog: "#7a7365",
-  duplicate: "#7a7365",
+/** Overlay colour per reading, and the label text drawn on it. */
+const COLOR: Record<string, { fill: string; text: string }> = {
+  marked: { fill: "#12a85f", text: "#ffffff" },
+  unmarked: { fill: "#f4f8fb", text: "#0c1a28" },
+  unknown: { fill: "#9aabbb", text: "#0c1a28" },
+  not_a_dog: { fill: "#6e7f91", text: "#ffffff" },
+  duplicate: { fill: "#6e7f91", text: "#ffffff" },
 };
+const colorOf = (status: string | undefined) => COLOR[status ?? "unknown"] ?? COLOR.unknown;
+
+type LabelBox = { id: string; left: number; top: number };
 
 /**
- * Rewrite chunk-local SAM object ids to the walk's dog numbers, so the
- * renderer's own labels read "Dog 7". Tracks that were dropped as noise get
- * ids from 10000 up and are hidden.
+ * Rewrite chunk-local SAM object ids to the walk's dog numbers. Tracks that
+ * were dropped as noise get ids from 10000 up and are hidden.
  */
 function remapIds(text: string, map: Map<string, number>): { text: string; hidden: Set<string> } {
   const hidden = new Set<string>();
@@ -40,6 +44,9 @@ export function WalkReplay({ chunks, dogs }: { chunks: ReplayChunk[]; dogs: Repl
   const playerRef = useRef<IMediaPlayer | null>(null);
   const rendererRef = useRef<SegmentationRenderer | null>(null);
   const hiddenRef = useRef<Set<string>>(new Set());
+  const labelsRef = useRef<Map<number, LabelBox[]>>(new Map());
+  const sourceRef = useRef({ w: 960, h: 540 });
+  const statusRef = useRef<Map<string, string>>(new Map());
   const dprRef = useRef(1);
   const [active, setActive] = useState(chunks[0]?.idx ?? 0);
   const [playing, setPlaying] = useState(false);
@@ -47,22 +54,62 @@ export function WalkReplay({ chunks, dogs }: { chunks: ReplayChunk[]; dogs: Repl
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const statusByLabel = useMemo(() => new Map(dogs.map((d) => [String(d.label), d.status])), [dogs]);
   const chunk = chunks.find((c) => c.idx === active) ?? chunks[0];
+
+  // Colours follow the readings, including a person's review.
+  useEffect(() => {
+    statusRef.current = new Map(dogs.map((d) => [String(d.label), d.status]));
+    playerRef.current?.forceRender().catch(() => {});
+  }, [dogs]);
 
   // One player and one renderer for the component's lifetime.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const renderer = new SegmentationRenderer({
-      objectColor: (id) => COLOR[statusByLabel.get(id) ?? "unknown"] ?? COLOR.unknown,
-      maskFillOpacity: 0.3,
+      objectColor: (id) => colorOf(statusRef.current.get(id)).fill,
+      maskFillOpacity: 0.22,
       maskOutline: { opacity: 0.95 },
-      boxLabels: true,
     });
+
+    // Labels are drawn here rather than by the renderer, which prints the raw detection score.
+    const drawLabels = (c: VideoFrameCompositionContext) => {
+      const boxes = labelsRef.current.get(c.frameIndex);
+      if (!boxes?.length) return;
+      const dpr = dprRef.current;
+      const { w: sw, h: sh } = sourceRef.current;
+      const scale = Math.min(c.canvas.width / sw, c.canvas.height / sh);
+      const ox = (c.canvas.width - sw * scale) / 2;
+      const oy = (c.canvas.height - sh * scale) / 2;
+      const ctx = c.ctx;
+      const h = 24 * dpr;
+      const pad = 9 * dpr;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.font = `600 ${13 * dpr}px "Mona Sans", ui-sans-serif, system-ui, sans-serif`;
+      ctx.textBaseline = "middle";
+      for (const b of boxes) {
+        if (hiddenRef.current.has(b.id)) continue;
+        const color = colorOf(statusRef.current.get(b.id));
+        const text = `Dog ${b.id}`;
+        const w = ctx.measureText(text).width + pad * 2;
+        const x = Math.min(ox + b.left * scale, c.canvas.width - w - 4 * dpr);
+        const above = oy + b.top * scale - h - 6 * dpr;
+        const y = above > 4 * dpr ? above : oy + b.top * scale + 6 * dpr;
+        ctx.fillStyle = color.fill;
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, h / 2);
+        ctx.fill();
+        ctx.fillStyle = color.text;
+        ctx.fillText(text, x + pad, y + h / 2 + dpr);
+      }
+      ctx.restore();
+    };
+
     const player = createMediaPlayer(canvas);
-    player.setCustomRender((ctx) => {
-      renderer.renderVideoFrame(ctx, { fit: "contain", devicePixelRatio: () => dprRef.current, hiddenIds: hiddenRef.current, boxLabel: "Dog" });
+    player.setCustomRender((c) => {
+      renderer.renderVideoFrame(c, { fit: "contain", devicePixelRatio: () => dprRef.current, hiddenIds: hiddenRef.current });
+      drawLabels(c);
     });
     const offs = [
       player.on("timeupdate", ({ time }) => setTime(time)),
@@ -96,11 +143,9 @@ export function WalkReplay({ chunks, dogs }: { chunks: ReplayChunk[]; dogs: Repl
       playerRef.current = null;
       rendererRef.current = null;
     };
-    // statusByLabel is read through the colour callback; the player is created once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load the selected minute: its video and its SAM output.
+  // Load the selected piece: its video and its SAM output.
   useEffect(() => {
     if (!chunk) return;
     let cancelled = false;
@@ -114,12 +159,23 @@ export function WalkReplay({ chunks, dogs }: { chunks: ReplayChunk[]; dogs: Repl
         const map = new Map<string, number>();
         for (const d of dogs) for (const s of d.segments) if (s.chunk === chunk.idx) map.set(s.objectId, d.label);
         const raw = await fetch(chunk.sam).then((r) => {
-          if (!r.ok) throw new Error("The tracking output for this minute is missing.");
+          if (!r.ok) throw new Error("The tracking output for this piece is missing.");
           return r.text();
         });
         const { text, hidden } = remapIds(raw, map);
         const result = await parseVideoText(text);
         if (cancelled) return;
+        const size = raw.match(/;w=(\d+);h=(\d+)/);
+        if (size) sourceRef.current = { w: Number(size[1]), h: Number(size[2]) };
+        const labels = new Map<number, LabelBox[]>();
+        for (const b of recordsOfKind(result.records, "box")) {
+          const f = frameIndexOf(b);
+          if (f == null) continue;
+          const list = labels.get(f) ?? [];
+          list.push({ id: b.objectId, left: b.left, top: b.top });
+          labels.set(f, list);
+        }
+        labelsRef.current = labels;
         hiddenRef.current = hidden;
         await renderer.update(result, { reset: true });
         await player.open(chunk.video);
@@ -127,7 +183,7 @@ export function WalkReplay({ chunks, dogs }: { chunks: ReplayChunk[]; dogs: Repl
         setReady(true);
         setTime(0);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "This minute couldn’t be loaded.");
+        if (!cancelled) setError(e instanceof Error ? e.message : "This piece couldn’t be loaded.");
       }
     })();
     return () => {
@@ -144,20 +200,21 @@ export function WalkReplay({ chunks, dogs }: { chunks: ReplayChunk[]; dogs: Repl
 
   return (
     <div>
-      <div ref={wrapRef} className="relative overflow-hidden rounded-[8px] bg-[#0f0e0c]">
+      <div ref={wrapRef} className="relative overflow-hidden rounded-[24px] bg-[#08121c]">
         <canvas ref={canvasRef} className="block" aria-label="Walk video with each dog outlined by SAM 3.1" />
-        {!ready && !error && <p className="label absolute inset-0 flex items-center justify-center text-[#efe7d8]/70">Loading minute {active + 1}</p>}
-        {error && <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-[#efe7d8]">{error}</p>}
+        {!ready && !error && <p className="absolute inset-0 flex items-center justify-center text-[0.9375rem] text-white/70">Loading the video</p>}
+        {error && <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-[0.9375rem] text-white">{error}</p>}
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={toggle} disabled={!ready} className="btn btn-quiet h-9 px-4 text-sm disabled:opacity-40">
+          <button type="button" onClick={toggle} disabled={!ready} className="btn btn-primary btn-sm min-w-[5.5rem] disabled:opacity-40">
             {playing ? "Pause" : "Play"}
           </button>
-          <span className="num text-sm text-ink-2">{clock((chunk?.startS ?? 0) + time)} into the walk</span>
+          <span className="num text-[0.9375rem] text-ink-2">{clock((chunk?.startS ?? 0) + time)} into the walk</span>
         </div>
         {chunks.length > 1 && (
-          <div className="flex flex-wrap gap-1" role="tablist" aria-label="Minute of the walk">
+          <div className="flex flex-wrap items-center gap-1" role="tablist" aria-label="Part of the walk">
+            <span className="mr-2 text-[0.875rem] text-ink-3">Part</span>
             {chunks.map((c) => (
               <button
                 key={c.idx}
@@ -165,7 +222,7 @@ export function WalkReplay({ chunks, dogs }: { chunks: ReplayChunk[]; dogs: Repl
                 role="tab"
                 aria-selected={c.idx === active}
                 onClick={() => setActive(c.idx)}
-                className={`num h-8 min-w-8 rounded-[6px] border px-2 text-xs transition-colors ${c.idx === active ? "border-ink bg-ink text-paper" : "border-line-strong hover:border-ink"}`}
+                className={`num h-9 min-w-9 rounded-[10px] px-2 text-[0.8125rem] font-semibold transition-colors ${c.idx === active ? "bg-ink text-on-ink" : "bg-surface text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:shadow-[inset_0_0_0_1px_var(--ink-3)]"}`}
               >
                 {c.idx + 1}
               </button>

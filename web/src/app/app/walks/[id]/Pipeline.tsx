@@ -12,39 +12,32 @@ export type LocalStage = {
   chunk: number;
 };
 
-type Step = { key: string; name: string; who: string; detail?: string; state: "done" | "now" | "next" };
+type StepState = "done" | "now" | "next";
+type Step = { key: string; name: string; who: string; detail?: string; state: StepState };
 
-function useNow(active: boolean) {
+function useNow() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!active) return;
     const t = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(t);
-  }, [active]);
+  }, []);
   return now;
 }
 
-function ChunkCell({ c, now }: { c: Chunk; now: number }) {
+function Piece({ c, now }: { c: Chunk; now: number }) {
   const started = c.submitted_at ? new Date(c.submitted_at).getTime() : null;
   const ended = c.completed_at ? new Date(c.completed_at).getTime() : null;
-  const secs = started ? Math.round(((ended ?? now) - started) / 1000) : null;
+  const secs = started ? Math.max(0, Math.round(((ended ?? now) - started) / 1000)) : null;
   const tone =
-    c.status === "done"
-      ? "bg-ink text-paper border-ink"
-      : c.status === "failed"
-        ? "border-warn bg-warn-soft text-ink"
-        : c.status === "submitted"
-          ? "border-ink text-ink"
-          : "border-line-strong text-ink-3";
+    c.status === "done" ? "bg-ink text-on-ink" : c.status === "failed" ? "bg-amber-soft text-ink" : c.status === "submitted" ? "bg-surface text-ink shadow-[inset_0_0_0_1.5px_var(--ink)]" : "bg-canvas-2 text-ink-3";
+  const range = `${clock(c.start_s)} to ${clock(c.end_s)}`;
   return (
-    <li className={`rounded-[6px] border px-3 py-2.5 transition-colors duration-300 ${tone}`}>
-      <p className="label num" style={{ color: "inherit" }}>
-        {clock(c.start_s).replace(/\.\d$/, "")}–{clock(c.end_s).replace(/\.\d$/, "")}
-      </p>
-      <p className="num mt-1 text-sm">
-        {c.status === "done" && `${c.objects ?? 0} ${c.objects === 1 ? "dog" : "dogs"} · ${secs}s`}
-        {c.status === "submitted" && `Tracking · ${secs ?? 0}s`}
-        {c.status === "failed" && "Failed"}
+    <li className={`rounded-[14px] px-3.5 py-3 transition-colors duration-500 ${tone}`} title={range}>
+      <p className="num text-[0.8125rem] opacity-80">{range}</p>
+      <p className="num mt-0.5 text-[0.9375rem] font-semibold">
+        {c.status === "done" && `${c.objects ?? 0} ${c.objects === 1 ? "dog" : "dogs"}`}
+        {c.status === "submitted" && `Counting, ${secs ?? 0}s`}
+        {c.status === "failed" && "Stopped"}
         {(c.status === "pending" || c.status === "uploaded") && "Waiting"}
       </p>
     </li>
@@ -53,32 +46,31 @@ function ChunkCell({ c, now }: { c: Chunk; now: number }) {
 
 export function Pipeline({ state, local }: { state: WalkState; local: LocalStage | null }) {
   const { walk, chunks, dogs } = state;
-  const now = useNow(true);
+  const now = useNow();
   const order = ["uploading", "tracking", "stitching", "needs_crops", "reading"];
-  const at = order.indexOf(walk.status);
+  const at = Math.max(0, order.indexOf(walk.status));
   const tracked = chunks.filter((c) => c.status === "done").length;
-  const submitted = chunks.filter((c) => c.status === "submitted" || c.status === "done").length;
+  const sent = chunks.filter((c) => c.status === "submitted" || c.status === "done").length;
   const read = dogs.filter((d) => d.mark != null).length;
+  const allSent = sent === chunks.length && chunks.length > 0;
 
   const steps: Step[] = [
     {
       key: "prepare",
-      name: "Prepare the video on this device",
-      who: "Browser",
+      name: "Prepare the video on this phone",
+      who: "This device",
       detail:
         local?.kind === "preparing"
           ? `Piece ${local.index + 1} of ${local.total}, ${Math.round(local.progress * 100)}%`
-          : submitted
-            ? `${submitted} of ${chunks.length} pieces sent`
-            : undefined,
-      state: at > 0 || (walk.status === "uploading" && submitted === chunks.length) ? "done" : "now",
+          : `${sent} of ${chunks.length} pieces sent`,
+      state: at > 0 || allSent ? "done" : "now",
     },
     {
       key: "track",
       name: "Track every dog",
       who: "SAM 3.1",
-      detail: at >= 1 ? `${tracked} of ${chunks.length} pieces tracked` : undefined,
-      state: at > 1 ? "done" : at === 1 || (at === 0 && submitted > 0) ? "now" : "next",
+      detail: sent ? `${tracked} of ${chunks.length} pieces counted` : undefined,
+      state: at > 1 ? "done" : sent > 0 ? "now" : "next",
     },
     {
       key: "join",
@@ -90,7 +82,7 @@ export function Pipeline({ state, local }: { state: WalkState; local: LocalStage
     {
       key: "crops",
       name: "Cut full-resolution close-ups",
-      who: "Browser",
+      who: "This device",
       detail:
         local?.kind === "cropping"
           ? `${local.index} of ${local.total} frames`
@@ -102,52 +94,76 @@ export function Pipeline({ state, local }: { state: WalkState; local: LocalStage
     {
       key: "read",
       name: "Read each dog’s marks",
-      who: "Muse Spark 1.3",
+      who: "Muse Spark",
       detail: at === 4 ? `${read} of ${dogs.length} dogs read` : undefined,
-      state: at === 4 ? "now" : at > 4 ? "done" : "next",
+      state: at === 4 ? "now" : "next",
     },
   ];
 
+  const current = steps.find((s) => s.state === "now") ?? steps[0];
+  const headline =
+    current.key === "prepare"
+      ? "Preparing the walk"
+      : current.key === "track" || current.key === "join"
+        ? "Counting the dogs on this walk"
+        : current.key === "crops"
+          ? "Cutting a close-up of every dog"
+          : "Reading every vaccination mark";
+
   return (
-    <section className="mt-10 grid grid-cols-12 gap-x-6 gap-y-10" aria-live="polite">
+    <section className="mt-10 grid grid-cols-12 gap-y-8 lg:gap-x-8" aria-live="polite">
+      <div className="panel col-span-12 p-7 md:p-9 lg:col-span-7">
+        <p className="text-[0.9375rem] font-semibold text-mark-strong">In progress</p>
+        <h2 className="display-quiet mt-2 text-3xl md:text-4xl">{headline}</h2>
+        <p className="mt-3 text-ink-2">
+          {current.who === "This device" ? "Keep this tab open. " : ""}
+          {current.detail ?? "Starting"}
+        </p>
+        {local && (local.kind === "preparing" || local.kind === "cropping" || local.kind === "sending") && (
+          <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-canvas-2" role="progressbar" aria-valuenow={Math.round(local.progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full rounded-full bg-ink transition-[width] duration-300" style={{ width: `${Math.round(local.progress * 100)}%` }} />
+          </div>
+        )}
+
+        <h3 className="mt-10 text-[0.9375rem] font-semibold">The walk, in thirty-second pieces</h3>
+        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+          {chunks.map((c) => (
+            <Piece key={c.idx} c={c} now={now} />
+          ))}
+        </ul>
+        <p className="mt-4 text-[0.875rem] text-ink-3">
+          Pieces are counted at the same time and overlap by two seconds, so a dog crossing from one piece into the next is
+          matched and counted once.
+        </p>
+      </div>
+
       <ol className="col-span-12 lg:col-span-5">
         {steps.map((st, i) => (
-          <li key={st.key} className="grid grid-cols-[2rem_1fr] gap-x-3 border-b border-line py-4 last:border-b-0">
+          <li key={st.key} className="grid grid-cols-[2.25rem_1fr] gap-x-4 py-3.5">
             <span
               aria-hidden
-              className={`num mt-0.5 flex size-6 items-center justify-center rounded-full border text-xs ${
-                st.state === "done" ? "border-ink bg-ink text-paper" : st.state === "now" ? "border-accent text-accent" : "border-line-strong text-ink-3"
+              className={`num flex size-8 items-center justify-center rounded-full text-[0.875rem] font-semibold transition-colors ${
+                st.state === "done" ? "bg-mark text-white" : st.state === "now" ? "bg-ink text-on-ink" : "bg-canvas-2 text-ink-3"
               }`}
             >
-              {i + 1}
-            </span>
-            <div>
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <p className={st.state === "next" ? "text-ink-3" : "font-semibold"}>{st.name}</p>
-                <span className="label">{st.who}</span>
-              </div>
-              {st.detail && <p className="num mt-1 text-sm text-ink-2">{st.detail}</p>}
-              {st.state === "now" && local && (st.key === "prepare" || st.key === "crops") && (
-                <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-paper-3">
-                  <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${Math.round(local.progress * 100)}%` }} />
-                </div>
+              {st.state === "done" ? (
+                <svg viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m3.5 8.5 3 3 6-7" />
+                </svg>
+              ) : (
+                i + 1
               )}
+            </span>
+            <div className="pt-0.5">
+              <p className={`font-semibold ${st.state === "next" ? "text-ink-3" : "text-ink"}`}>{st.name}</p>
+              <p className="text-[0.875rem] text-ink-3">
+                {st.who}
+                {st.state !== "next" && st.detail ? `, ${st.detail}` : ""}
+              </p>
             </div>
           </li>
         ))}
       </ol>
-      <div className="col-span-12 lg:col-span-6 lg:col-start-7">
-        <p className="label mb-3">The walk, thirty seconds at a time</p>
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {chunks.map((c) => (
-            <ChunkCell key={c.idx} c={c} now={now} />
-          ))}
-        </ul>
-        <p className="mt-4 text-sm text-ink-3">
-          Each piece is tracked separately and at the same time. Pieces overlap by two seconds, so a dog crossing from
-          one into the next is matched and counted once.
-        </p>
-      </div>
     </section>
   );
 }

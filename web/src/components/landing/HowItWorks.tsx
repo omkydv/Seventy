@@ -99,7 +99,7 @@ function ReadVisual({ data, reading }: { data: HowData["lane"]; reading: HowData
 function DecideVisual({ e }: { e: HowData["example"] }) {
   const shownMarked = Math.round(e.p * 40);
   return (
-    <div className="absolute inset-0 flex flex-col justify-center bg-white p-8 text-[#0c1a28] sm:p-10">
+    <div className="flex h-full flex-col justify-center bg-white p-7 text-[#0c1a28] sm:p-10">
       <p className="text-[0.9375rem] text-[#3d4f63]">Vaccination coverage</p>
       <p className="display mt-1 text-6xl sm:text-7xl">{(e.p * 100).toFixed(1)}%</p>
       <p className="mt-2 text-[0.9375rem] text-[#3d4f63]">
@@ -108,7 +108,7 @@ function DecideVisual({ e }: { e: HowData["example"] }) {
       <div className="mt-8">
         <CoverageMeter p={e.p} low={e.low} high={e.high} />
       </div>
-      <div className="mt-6 grid w-fit grid-cols-[repeat(20,18px)] gap-1.5" aria-hidden>
+      <div className="mt-6 grid w-fit grid-cols-[repeat(10,18px)] gap-1.5 sm:grid-cols-[repeat(20,18px)]" aria-hidden>
         {Array.from({ length: 40 }, (_, i) => (
           <DogGlyph key={i} status={i < shownMarked ? "marked" : "unmarked"} size={18} />
         ))}
@@ -128,7 +128,7 @@ function PlanVisual({ p }: { p: HowData["population"] }) {
     </div>
   );
   return (
-    <div className="absolute inset-0 flex flex-col justify-center gap-6 bg-white p-8 text-[#0c1a28] sm:p-10">
+    <div className="flex h-full flex-col justify-center gap-6 bg-white p-7 text-[#0c1a28] sm:p-10">
       <div>
         <p className="text-[0.9375rem] font-semibold">Walk one, Tuesday</p>
         <p className="mb-2 text-[0.875rem] text-[#6e7f91]">{p.n1} dogs seen</p>
@@ -152,7 +152,8 @@ function PlanVisual({ p }: { p: HowData["population"] }) {
   );
 }
 
-type Step = { title: string; body: ReactNode; meta: string; visual: ReactNode };
+/** `flow` visuals are panels of text and figures: on phones they take their own height instead of a photo frame. */
+type Step = { title: string; body: ReactNode; meta: string; visual: ReactNode; flow?: boolean };
 
 export function HowItWorks({ data }: { data: HowData }) {
   const steps: Step[] = [
@@ -179,12 +180,14 @@ export function HowItWorks({ data }: { data: HowData }) {
       body: "Coverage comes with a 95% interval, and dogs that couldn’t be read are counted and shown, never hidden. The team sees whether the area is done, nearly done, or needs another round.",
       meta: "Example using counts from the 2026 Cox’s Bazar camp survey.",
       visual: <DecideVisual e={data.example} />,
+      flow: true,
     },
     {
       title: "Plan the next drive",
       body: "Walk the same route on two mornings and Seventy recognises the dogs it saw before. Chapman’s mark–resight formula, a standard method in field ecology, turns that into an estimate of how many dogs live there, without catching a single one.",
       meta: "Muse Wonder writes the report, with every rule it relies on cited.",
       visual: <PlanVisual p={data.population} />,
+      flow: true,
     },
   ];
 
@@ -208,14 +211,14 @@ export function HowItWorks({ data }: { data: HowData }) {
     <section id="how" className="scroll-mt-6 bg-canvas py-28 md:py-40">
       <div className="shell">
         <div className="max-w-3xl">
-          <h2 className="display text-4xl md:text-[4.25rem] md:leading-[1.02]">Seventy turns the same walk into evidence.</h2>
+          <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Seventy turns the same walk into evidence.</h2>
           <p className="lede mt-8 max-w-2xl">
             Five steps from a phone video to a decision. Every picture in this section is real output from Meta’s models on
             real photographs.
           </p>
         </div>
 
-        <div className="mt-20 grid grid-cols-12 gap-x-10">
+        <div className="mt-20 grid grid-cols-12 lg:gap-x-10">
           <div className="col-span-12 hidden lg:col-span-7 lg:block">
             <div className="sticky top-[12vh] h-[76vh] max-h-[720px]">
               <div className="panel relative h-full overflow-hidden">
@@ -247,7 +250,7 @@ export function HowItWorks({ data }: { data: HowData }) {
                 data-index={i}
                 className="flex flex-col justify-center py-10 lg:min-h-[76vh] lg:py-0"
               >
-                <div className="panel relative mb-8 aspect-[4/3] overflow-hidden lg:hidden">{s.visual}</div>
+                <div className={`panel relative mb-8 overflow-hidden lg:hidden ${s.flow ? "" : "aspect-[4/3]"}`}>{s.visual}</div>
                 <div
                   className="transition-colors duration-500"
                   style={{ color: active === i ? "var(--ink)" : undefined }}

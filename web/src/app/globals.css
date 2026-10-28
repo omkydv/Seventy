@@ -184,10 +184,11 @@
 }
 
 @layer components {
-  /* Tabular figures for numbers that update or line up in columns. */
+  /* Numbers. Mona Sans draws a slashed zero in its tabular set, so figures stay
+     proportional; counters that tick get a fixed width where they sit instead. */
   .num {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1, "zero" 0;
+    font-variant-numeric: lining-nums proportional-nums;
+    font-feature-settings: "tnum" 0, "zero" 0;
   }
   .shell {
     width: 100%;
@@ -309,5 +310,6 @@
     scroll-behavior: auto !important;
   }
 }
+
 
 

@@ -20,13 +20,11 @@ function Cited({ text, sources }: { text: string; sources: Report["sources"] }) 
       {parts.map((p, i) => {
         const m = p.match(/^\[(\d+)\]$/);
         const src = m ? sources[Number(m[1]) - 1] : null;
-        if (!m) return <Fragment key={i}>{p}</Fragment>;
-        return src ? (
-          <a key={i} href={src.url} target="_blank" rel="noreferrer" className="num align-super text-xs text-accent">
-            [{m[1]}]
+        if (!m || !src) return <Fragment key={i}>{p}</Fragment>;
+        return (
+          <a key={i} href={src.url} target="_blank" rel="noreferrer" className="num align-super text-[0.75rem] font-semibold text-mark-strong">
+            {m[1]}
           </a>
-        ) : (
-          <Fragment key={i}>{p}</Fragment>
         );
       })}
     </>
@@ -59,60 +57,54 @@ export function ReportPanel({ walkId, owner }: { walkId: string; owner: boolean 
     }
   }
 
-  if (!loaded) return null;
-  if (!report && !owner) return null;
+  if (!loaded || (!report && !owner)) return null;
 
   return (
-    <section className="mt-16 border-t border-ink pt-8" aria-busy={busy}>
-      <div className="flex flex-wrap items-baseline justify-between gap-4">
-        <h2 className="display text-3xl">Program report</h2>
-        <span className="label">Muse Wonder, with web search</span>
-      </div>
+    <section className="mt-16" aria-busy={busy}>
+      <h2 className="text-xl font-semibold tracking-[-0.01em]">Program report</h2>
+      <p className="mt-1 text-ink-2">Written by Muse Wonder from this survey’s numbers, with the rules it relies on found by web search and cited.</p>
       {!report && (
-        <div className="mt-6 max-w-xl">
-          <p className="text-ink-2">
-            A one-page report for the district office: the result, what to do next, and the national rules it rests on,
-            each one cited.
-          </p>
-          <button type="button" onClick={write} disabled={busy} className="btn btn-primary mt-5 disabled:opacity-60">
-            {busy ? "Writing the report, about 20 seconds…" : "Write the report"}
+        <div className="panel mt-5 flex flex-col items-start gap-4 p-7 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-xl text-ink-2">One page for the district office: the result, what to do next, and why, with every rule cited.</p>
+          <button type="button" onClick={write} disabled={busy} className="btn btn-primary disabled:opacity-60">
+            {busy ? "Writing, about 20 seconds" : "Write the report"}
           </button>
-          {error && <p className="mt-3 text-sm text-warn">{error}</p>}
         </div>
       )}
+      {error && <p className="mt-3 rounded-[14px] bg-amber-soft px-5 py-3 text-[0.9375rem]">{error}</p>}
       {report && (
-        <article className="mt-8 grid grid-cols-12 gap-x-6 gap-y-8">
+        <article className="panel mt-5 grid grid-cols-12 gap-y-8 p-7 lg:gap-x-10 md:p-10">
           <div className="col-span-12 lg:col-span-8">
-            <p className="display text-3xl leading-tight md:text-4xl">{report.headline}</p>
+            <p className="display-quiet text-2xl md:text-3xl">{report.headline}</p>
             <p className="mt-5 text-lg leading-relaxed text-ink-2">{report.decision}</p>
-            <h3 className="label mt-10">Next steps</h3>
-            <ol className="mt-3 divide-y divide-line border-y border-line">
+            <h3 className="mt-10 font-semibold">Next steps</h3>
+            <ol className="mt-3 space-y-3">
               {report.next_steps.map((s, i) => (
-                <li key={i} className="grid grid-cols-[2rem_1fr] py-3">
-                  <span className="num text-ink-3">{i + 1}</span>
-                  <span>{s}</span>
+                <li key={i} className="grid grid-cols-[2rem_1fr]">
+                  <span className="num font-semibold text-ink-3">{i + 1}</span>
+                  <span className="text-ink-2">{s}</span>
                 </li>
               ))}
             </ol>
-            <h3 className="label mt-10">Context</h3>
+            <h3 className="mt-10 font-semibold">Context</h3>
             <p className="mt-3 leading-relaxed text-ink-2">
               <Cited text={report.context} sources={report.sources} />
             </p>
-            <h3 className="label mt-10">Limits of this walk</h3>
-            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-ink-2">
+            <h3 className="mt-10 font-semibold">Limits of this survey</h3>
+            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-ink-2 marker:text-ink-3">
               {report.limits.map((l, i) => (
                 <li key={i}>{l}</li>
               ))}
             </ul>
           </div>
           <aside className="col-span-12 lg:col-span-4">
-            <h3 className="label">Sources</h3>
-            <ol className="mt-3 space-y-3 text-sm">
+            <h3 className="font-semibold">Sources</h3>
+            <ol className="mt-3 space-y-4 text-[0.9375rem]">
               {report.sources.map((s, i) => (
-                <li key={s.url} className="grid grid-cols-[1.75rem_1fr]">
-                  <span className="num text-ink-3">[{i + 1}]</span>
+                <li key={s.url} className="grid grid-cols-[1.5rem_1fr]">
+                  <span className="num font-semibold text-mark-strong">{i + 1}</span>
                   <span>
-                    <a href={s.url} target="_blank" rel="noreferrer" className="link">
+                    <a href={s.url} target="_blank" rel="noreferrer" className="link font-medium">
                       {s.title}
                     </a>
                     <span className="mt-0.5 block text-ink-3">{s.supports}</span>
@@ -121,8 +113,8 @@ export function ReportPanel({ walkId, owner }: { walkId: string; owner: boolean 
               ))}
             </ol>
             {owner && (
-              <button type="button" onClick={write} disabled={busy} className="btn btn-quiet mt-6 h-9 px-4 text-sm disabled:opacity-60">
-                {busy ? "Rewriting…" : "Write it again"}
+              <button type="button" onClick={write} disabled={busy} className="btn btn-secondary btn-sm mt-6 disabled:opacity-60">
+                {busy ? "Rewriting" : "Write it again"}
               </button>
             )}
           </aside>

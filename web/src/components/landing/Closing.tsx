@@ -5,7 +5,7 @@ import { Wordmark } from "./Brand";
 export function People() {
   return (
     <section className="bg-surface py-28 md:py-36">
-      <div className="shell grid grid-cols-12 gap-x-8 gap-y-8">
+      <div className="shell grid grid-cols-12 gap-y-8 lg:gap-x-8">
         <h2 className="display col-span-12 text-4xl md:text-[4rem] md:leading-[1.03] lg:col-span-5">It never follows people.</h2>
         <div className="col-span-12 grid gap-8 text-lg text-ink-2 sm:grid-cols-2 lg:col-span-6 lg:col-start-7">
           <p>Seventy only ever asks SAM to look for dogs. People are never tracked, counted or identified.</p>
@@ -64,7 +64,7 @@ const photos: [string, string][] = [
 export function Footer() {
   return (
     <footer className="bg-canvas pb-16 pt-20 text-[0.9375rem] text-ink-2">
-      <div className="shell grid grid-cols-12 gap-x-8 gap-y-12">
+      <div className="shell grid grid-cols-12 gap-y-12 md:gap-x-8">
         <div className="col-span-12 md:col-span-4">
           <Wordmark />
           <p className="mt-4 max-w-xs text-ink-3">
