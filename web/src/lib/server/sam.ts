@@ -57,4 +57,19 @@ export async function checkJob(responseId: string): Promise<JobState> {
   };
 }
 
+/** Segment one still image and return SAM's output text. Images are quick, so this waits for the answer. */
+export async function segmentImage(concept: string, imageUrl: string): Promise<string> {
+  let job = await createResponse({
+    model: SAM_MODEL,
+    input: [{ type: "message", role: "user", content: [{ type: "input_text", text: concept }, { type: "input_image", image_url: imageUrl }] }],
+    metadata: { include_confidence: "true" },
+  });
+  for (let i = 0; i < 30 && (job.status === "queued" || job.status === "in_progress"); i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    job = await getResponse(job.id);
+  }
+  if (job.status !== "completed") throw new Error(job.error?.message ?? `SAM ended ${job.status} on a close-up`);
+  return outputText(job);
+}
+
 export { compactTracks, type ChunkTracks } from "@/lib/sam/compact";

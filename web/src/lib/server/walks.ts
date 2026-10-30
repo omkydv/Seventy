@@ -4,6 +4,8 @@ import { walkStats, type StatDog } from "@/lib/stats";
 import { pickSamples, stitchChunks, type ChunkInput } from "@/lib/tracks";
 import { db, getBytes, getText, putText, signedReadUrl, signedUploadUrl } from "./db";
 import { classify, MARK_MODEL, readMarks, sparkCost, type MarkReading } from "./marks";
+import { earZoom } from "./ears";
+import { checkRepeats } from "./repeats";
 import { checkJob, compactTracks, samVideoCost, submitVideoJob, type ChunkTracks } from "./sam";
 import type { Workspace } from "./auth";
 import { env } from "./env";
@@ -43,7 +45,9 @@ export function planChunks(duration: number, chunkSeconds = 60, overlap = OVERLA
   return plan;
 }
 
-async function logUsage(row: { workspace_id: string; walk_id: string; model: string; units: number; unit: string; cost_usd: number }) {
+type Usage = { workspace_id: string; walk_id: string; model: string; units: number; unit: string; cost_usd: number; stage?: string; calls?: number; seconds?: number | null };
+
+async function logUsage(row: Usage) {
   await db().from("usage_log").insert(row);
 }
 
@@ -110,7 +114,6 @@ export async function submitChunk(walkId: string, idx: number) {
   const { data: chunk } = await db().from("chunks").select("*").eq("walk_id", walkId).eq("idx", idx).single();
   if (!chunk) throw new UserError("No such chunk.");
   if (chunk.status === "submitted" || chunk.status === "done") return chunk;
-  const { data: walk } = await db().from("walks").select("workspace_id, proc_fps").eq("id", walkId).single();
   const url = await signedReadUrl(chunk.storage_path, 60 * 60 * 24);
   const { responseId, via } = await submitVideoJob({
     concept: "dog",
@@ -118,15 +121,25 @@ export async function submitChunk(walkId: string, idx: number) {
     loadBytes: () => getBytes(chunk.storage_path),
     filename: `chunk-${idx}.mp4`,
   });
-  const frames = Math.round((chunk.end_s - chunk.start_s) * Number(walk?.proc_fps ?? 5));
+  // SAM looks for people only so the replay can blur them. If this job can't start, the walk goes on.
+  const people = await submitVideoJob({
+    concept: "person",
+    videoUrl: url,
+    loadBytes: () => getBytes(chunk.storage_path),
+    filename: `chunk-${idx}-people.mp4`,
+  }).catch(() => null);
   await db()
     .from("chunks")
-    .update({ status: "submitted", sam_response_id: responseId, submitted_at: new Date().toISOString(), attempts: chunk.attempts + 1, error: null })
+    .update({
+      status: "submitted",
+      sam_response_id: responseId,
+      people_response_id: people?.responseId ?? null,
+      submitted_at: new Date().toISOString(),
+      attempts: chunk.attempts + 1,
+      error: null,
+    })
     .eq("id", chunk.id);
   await db().from("walks").update({ status: "tracking", progress: { stage: "tracking", via } }).eq("id", walkId);
-  if (walk) {
-    await logUsage({ workspace_id: walk.workspace_id, walk_id: walkId, model: "sam-3.1", units: frames, unit: "frames", cost_usd: samVideoCost(frames) });
-  }
   return { ...chunk, status: "submitted", sam_response_id: responseId };
 }
 
@@ -138,10 +151,38 @@ type DogRow = {
   mark: MarkReading | null;
 };
 
+const secondsSince = (iso: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 1000 : null);
+
+/** Save each finished people job, whatever stage the walk is at. */
+export async function collectPeople(walkId: string, workspaceId?: string) {
+  if (!workspaceId) {
+    const { data } = await db().from("walks").select("workspace_id").eq("id", walkId).single();
+    workspaceId = String(data?.workspace_id ?? "");
+  }
+  const { data: chunks } = await db().from("chunks").select("id, idx, people_response_id, people_path, submitted_at, frames").eq("walk_id", walkId);
+  const waiting = (chunks ?? []).filter((c) => c.people_response_id && !c.people_path);
+  await Promise.all(
+    waiting.map(async (c) => {
+      const s = await checkJob(c.people_response_id).catch(() => null);
+      if (!s || s.state === "running") return;
+      if (s.state === "failed") {
+        await db().from("chunks").update({ people_response_id: null }).eq("id", c.id);
+        return;
+      }
+      const path = `${walkId}/sam/${String(c.idx).padStart(3, "0")}.people.txt`;
+      await putText(path, s.text, "text/plain");
+      await db().from("chunks").update({ people_path: path }).eq("id", c.id);
+      const frames = Number(c.frames ?? 0);
+      await logUsage({ workspace_id: workspaceId, walk_id: walkId, model: "sam-3.1", units: frames, unit: "frames", cost_usd: samVideoCost(frames), stage: "Find people to blur", calls: 1, seconds: secondsSince(c.submitted_at) });
+    }),
+  );
+}
+
 /** Do the next piece of work for a walk and return its state. Safe to call repeatedly. */
 export async function advance(walkId: string) {
   const { data: walk } = await db().from("walks").select("*").eq("id", walkId).single();
   if (!walk) throw new UserError("No such walk.");
+  await collectPeople(walkId, String(walk.workspace_id)).catch(() => {});
 
   if (walk.status === "tracking" || walk.status === "uploading") {
     const { data: chunks } = await db().from("chunks").select("*").eq("walk_id", walkId).order("idx");
@@ -162,6 +203,17 @@ export async function advance(walkId: string) {
           .from("chunks")
           .update({ status: "done", tracks_path: `${base}.json`, frames: tracks.frames, objects: Object.keys(tracks.objects).length, completed_at: new Date().toISOString() })
           .eq("id", c.id);
+        await logUsage({
+          workspace_id: String(walk.workspace_id),
+          walk_id: walkId,
+          model: "sam-3.1",
+          units: tracks.frames,
+          unit: "frames",
+          cost_usd: samVideoCost(tracks.frames),
+          stage: "Track every dog",
+          calls: 1,
+          seconds: secondsSince(c.submitted_at),
+        });
       }),
     );
     const { data: after } = await db().from("chunks").select("*").eq("walk_id", walkId).order("idx");
@@ -238,6 +290,8 @@ export async function cropUploadUrls(walkId: string, items: { dogId: string; n: 
 
 const READ_BATCH = 6;
 
+const jpegDataUrl = (b: Uint8Array) => `data:image/jpeg;base64,${Buffer.from(b).toString("base64")}`;
+
 async function readNextDogs(walkId: string, walk: Record<string, unknown>) {
   const { data: pending } = await db()
     .from("dogs")
@@ -247,26 +301,61 @@ async function readNextDogs(walkId: string, walk: Record<string, unknown>) {
     .order("label")
     .limit(READ_BATCH);
   const list = (pending ?? []) as Pick<DogRow, "id" | "label" | "crops">[];
+  const ws = String(walk.workspace_id);
   await Promise.all(
     list.map(async (d) => {
-      const crops = (d.crops ?? []).slice(0, 3);
+      const crops = (d.crops ?? []).filter((c) => (c as { kind?: string }).kind !== "ear").slice(0, 3);
       if (!crops.length) {
         await db().from("dogs").update({ mark: { skipped: true }, mark_status: "unknown", mark_kind: "unknown" }).eq("id", d.id);
         return;
       }
-      const urls = await Promise.all(crops.map((c) => signedReadUrl(c.path, 60 * 30)));
+      // Images go to the models inline: a file uploaded a moment ago can't always be fetched by URL yet.
+      const bytes = await Promise.all(crops.map((c) => getBytes(c.path)));
+      const urls = bytes.map(jpegDataUrl);
+      // SAM finds an ear on each of the two best close-ups, enlarged so a tag or notch can be read.
+      const ears: { path: string; t: number; kind: "ear" }[] = [];
+      const earUrls: string[] = [];
+      for (const [k, c] of crops.slice(0, 2).entries()) {
+        try {
+          const zoom = await earZoom(bytes[k]);
+          await logUsage({ workspace_id: ws, walk_id: walkId, model: "sam-3.1", units: 1, unit: "images", cost_usd: zoom.cost, stage: "Find the ears", calls: 1, seconds: zoom.ms / 1000 });
+          if (!zoom.ear) continue;
+          const path = `${walkId}/crops/${d.id}-ear${k}.jpg`;
+          earUrls.push(jpegDataUrl(zoom.ear));
+          const { error } = await db().storage.from("walks").upload(path, zoom.ear, { upsert: true, contentType: "image/jpeg" });
+          if (!error) ears.push({ path, t: c.t, kind: "ear" });
+        } catch {
+          /* no ear zoom for this close-up; the reading uses the close-ups alone */
+        }
+      }
       try {
-        const { value, usage, ms } = await readMarks(urls);
+        const { value, usage, ms } = await readMarks(urls, earUrls);
         const cls = classify(value, walk.target_mark as "vaccination" | "sterilization", (walk.mark_types as string[]) ?? ["paint"]);
-        await db().from("dogs").update({ mark: value, mark_status: cls.status, mark_kind: cls.kind, reading_ms: ms }).eq("id", d.id);
-        await logUsage({ workspace_id: String(walk.workspace_id), walk_id: walkId, model: MARK_MODEL, units: (usage?.input_tokens ?? 0) + (usage?.output_tokens ?? 0), unit: "tokens", cost_usd: sparkCost(usage) });
+        await db()
+          .from("dogs")
+          .update({ mark: value, mark_status: cls.status, mark_kind: cls.kind, reading_ms: ms, crops: [...crops, ...ears], ear_crop_path: ears[0]?.path ?? null })
+          .eq("id", d.id);
+        await logUsage({
+          workspace_id: ws,
+          walk_id: walkId,
+          model: MARK_MODEL,
+          units: (usage?.input_tokens ?? 0) + (usage?.output_tokens ?? 0),
+          unit: "tokens",
+          cost_usd: sparkCost(usage),
+          stage: "Read every mark",
+          calls: 1,
+          seconds: ms / 1000,
+        });
       } catch (e) {
         await db().from("dogs").update({ mark: { error: String(e).slice(0, 300) }, mark_status: "unknown", mark_kind: "unknown" }).eq("id", d.id);
       }
     }),
   );
   const { count } = await db().from("dogs").select("id", { count: "exact", head: true }).eq("walk_id", walkId).is("mark", null);
-  if (!count) await finish(walkId, String(walk.target_mark));
+  if (!count) {
+    await checkRepeats(walkId, (row) => logUsage({ workspace_id: ws, walk_id: walkId, ...row })).catch(() => {});
+    await finish(walkId, String(walk.target_mark));
+  }
 }
 
 

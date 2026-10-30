@@ -389,7 +389,19 @@ const MODEL_NAME: Record<string, string> = { "sam-3.1": "SAM 3.1", "muse-spark-1
 
 function UsagePanel({ usage, walk }: { usage: UsageRow[]; walk: WalkState["walk"] }) {
   if (!usage.length) return null;
-  const rows = [...usage].sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
+  // The server logs one row per call; the table shows one row per step.
+  const byStage = new Map<string, UsageRow>();
+  for (const u of usage) {
+    const key = `${u.stage ?? "Other"}|${u.model}`;
+    const prev = byStage.get(key);
+    byStage.set(
+      key,
+      prev
+        ? { ...prev, units: prev.units + u.units, calls: prev.calls + (u.calls ?? 1), seconds: u.seconds == null ? prev.seconds : (prev.seconds ?? 0) + u.seconds, cost_usd: prev.cost_usd + u.cost_usd }
+        : { ...u, stage: u.stage ?? "Other", calls: u.calls ?? 1 },
+    );
+  }
+  const rows = [...byStage.values()].sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
   const total = rows.reduce((n, r) => n + r.cost_usd, 0);
   const amount = (r: UsageRow) =>
     r.unit === "frames" ? `${r.units.toLocaleString("en-US")} frames` : r.unit === "images" ? plural(r.units, "close-up") : `${plural(r.calls, "call")}, ${r.units.toLocaleString("en-US")} tokens`;
@@ -414,7 +426,7 @@ function UsagePanel({ usage, walk }: { usage: UsageRow[]; walk: WalkState["walk"
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.stage} className="border-t border-line">
+              <tr key={`${r.stage}|${r.model}`} className="border-t border-line">
                 <td className="px-5 py-3 font-medium md:px-7">{r.stage}</td>
                 <td className="px-3 py-3 text-ink-2">{MODEL_NAME[r.model] ?? r.model}</td>
                 <td className="px-3 py-3 text-ink-2">{amount(r)}</td>
