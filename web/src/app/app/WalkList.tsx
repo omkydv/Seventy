@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import fieldSamples from "@/content/samples.json";
 import { useEffect, useState } from "react";
 import { DogGlyph } from "@/components/DogGlyph";
 import { api, ensureWorkspace } from "@/lib/client/workspace";
@@ -125,16 +127,30 @@ export function WalkList() {
 
       <section aria-labelledby="samples">
         <h2 id="samples" className="display-quiet text-2xl md:text-3xl">
-          Sample surveys
+          Field samples
         </h2>
-        <p className="mt-2 max-w-xl text-ink-2">Real walks counted by Seventy, open to everyone.</p>
-        <div className="mt-6">
-          {data.samples.length ? (
-            <List rows={data.samples} />
-          ) : (
-            <p className="panel p-6 text-ink-2">Sample surveys appear here once they have been counted.</p>
-          )}
-        </div>
+        <p className="mt-2 max-w-2xl text-ink-2">
+          Four real street clips from four very different places, counted by Seventy and checked by hand. Open one to see every dog, try the review,
+          and see what each step cost.
+        </p>
+        <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {fieldSamples.samples.map((s) => (
+            <li key={s.slug}>
+              <Link href={`/app/walks/${s.walk}`} className="group panel block h-full overflow-hidden">
+                <div className="relative aspect-[4/3] bg-canvas-2">
+                  <Image src={`/samples/${s.slug}.jpg`} alt="" fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+                </div>
+                <div className="p-5">
+                  <p className="text-[0.8125rem] text-ink-3">{s.place}</p>
+                  <p className="mt-0.5 font-semibold tracking-[-0.01em] group-hover:underline">{s.title}</p>
+                  <p className="num mt-2 text-[0.9375rem] text-ink-2">
+                    <span className="font-semibold text-ink">{s.seventy}</span> {s.seventy === 1 ? "dog" : "dogs"}, {s.mode.toLowerCase()}
+                  </p>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );

@@ -107,6 +107,7 @@
   --color-amber-soft: var(--amber-soft);
   --color-sky: var(--sky);
   --color-on-ink: var(--on-ink);
+  --color-focus: var(--focus);
 
   --font-sans: var(--font-mona), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -310,6 +311,7 @@
     scroll-behavior: auto !important;
   }
 }
+
 
 
 

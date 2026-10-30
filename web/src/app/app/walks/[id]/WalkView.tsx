@@ -209,14 +209,15 @@ export function WalkView({ id }: { id: string }) {
 
   const w = s.walk;
   const processing = !["review", "done", "failed"].includes(w.status);
-  const kind = w.mode === "plan" ? "Plan" : w.target_mark === "sterilization" ? "Check, sterilization" : "Check, vaccination";
+  const kind =
+    w.mode === "plan" ? "Count before a drive" : w.target_mark === "sterilization" ? "Sterilization check" : w.mark_types?.length === 1 && w.mark_types[0] === "ear_tag" ? "Ear-tag check" : "Vaccination check";
   return (
     <main className="shell pb-28 pt-8 md:pt-12">
       <Link href="/app" className="text-[0.9375rem] font-medium text-ink-2 hover:text-ink">
         Surveys
       </Link>
       <header className="mt-3 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-        <h1 className="display text-4xl md:text-[3.5rem]">{w.area_name || w.title || "Untitled walk"}</h1>
+        <h1 className="display text-4xl md:text-[3.5rem]">{w.title || w.area_name || "Untitled walk"}</h1>
         <p className="num pb-2 text-[0.9375rem] text-ink-2">
           {kind}, {day(w.recorded_at ?? w.created_at)}, {duration(w.duration_s)} of video
         </p>

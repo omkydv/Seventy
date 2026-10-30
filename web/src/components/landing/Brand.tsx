@@ -32,8 +32,11 @@ export function LandingHeader() {
           <a href="#how" className="hidden rounded-lg px-3 py-2 hover:bg-black/5 md:inline-block">
             How it works
           </a>
-          <a href="#evidence" className="hidden rounded-lg px-3 py-2 hover:bg-black/5 md:inline-block">
-            Evidence
+          <a href="#places" className="hidden rounded-lg px-3 py-2 hover:bg-black/5 md:inline-block">
+            Real surveys
+          </a>
+          <a href="#proof" className="hidden rounded-lg px-3 py-2 hover:bg-black/5 lg:inline-block">
+            Checked by hand
           </a>
           <Link href="/app" className="btn btn-primary btn-sm ml-3">
             Open the app

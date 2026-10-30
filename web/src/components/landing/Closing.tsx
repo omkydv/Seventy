@@ -2,23 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Wordmark } from "./Brand";
 
-export function People() {
-  return (
-    <section className="bg-surface py-28 md:py-36">
-      <div className="shell grid grid-cols-12 gap-y-8 lg:gap-x-8">
-        <h2 className="display col-span-12 text-4xl md:text-[4rem] md:leading-[1.03] lg:col-span-5">It never follows people.</h2>
-        <div className="col-span-12 grid gap-8 text-lg text-ink-2 sm:grid-cols-2 lg:col-span-6 lg:col-start-7">
-          <p>Seventy only ever asks SAM to look for dogs. People are never tracked, counted or identified.</p>
-          <p>
-            Faces, number plates and shop signs are blurred before anything leaves a team’s workspace, and the original video
-            never leaves the phone.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function FinalCta() {
   return (
     <section className="tone-light relative isolate overflow-hidden bg-[#cfdfe8]">
@@ -47,9 +30,12 @@ export function FinalCta() {
 }
 
 const sources: [string, string][] = [
+  ["WHO: rabies fact sheet (2026)", "https://www.who.int/news-room/fact-sheets/detail/rabies"],
   ["WHO: Zero by 30, the global plan to end dog-mediated rabies", "https://www.who.int/publications/m/item/zero-by-30-the-global-strategic-plan-to-prevent-humandeaths-from-dog-transmitted-rabies-by-2030"],
+  ["Three ways to measure one campaign’s coverage (Frontiers in Microbiology, 2025)", "https://www.frontiersin.org/journals/microbiology/articles/10.3389/fmicb.2025.1696281/full"],
+  ["Comparing coverage surveys, and the puppies transects miss (Frontiers in Veterinary Science, 2017)", "https://www.frontiersin.org/journals/veterinary-science/articles/10.3389/fvets.2017.00033/full"],
   ["Vaccinate–assess–move: mass dog vaccination with mobile data collection (BMC Infectious Diseases)", "https://bmcinfectdis.biomedcentral.com/articles/10.1186/s12879-015-1320-2"],
-  ["Dog vaccination and post-vaccination surveys in the Cox’s Bazar camps (PLOS NTD, 2026)", "https://journals.plos.org/plosntds/article?id=10.1371%2Fjournal.pntd.0014143"],
+  ["A 2026 dog vaccination campaign and its post-vaccination survey (PLOS Neglected Tropical Diseases)", "https://journals.plos.org/plosntds/article?id=10.1371%2Fjournal.pntd.0014143"],
   ["Short-term marking of dogs for rabies control (Bothma et al.)", "https://pubmed.ncbi.nlm.nih.gov/26092723/"],
   ["Mark–resight surveys of roaming dogs (BMC Veterinary Research)", "https://link.springer.com/article/10.1186/1746-6148-7-46"],
   ["United Against Rabies: dog population estimation methods (2026)", "https://unitedagainstrabies.org/app/uploads/2026/04/2026_UAR_DogPopulationEstimationMethodologies_V2_Apr2026_EN.pdf"],
@@ -70,6 +56,7 @@ export function Footer() {
           <p className="mt-4 max-w-xs text-ink-3">
             Rabies vaccination coverage, measured from a walk. Built for the Meta Global AI Developer Hackathon, 2026.
           </p>
+          <p className="mt-4 max-w-xs text-ink-2">Built by one person in a rural village, with a laptop and a phone.</p>
         </div>
         <div className="col-span-12 md:col-span-5">
           <p className="mb-3 font-semibold text-ink">Sources</p>
@@ -94,6 +81,7 @@ export function Footer() {
                 </a>
               </li>
             ))}
+            <li>Street clips from Pexels</li>
           </ul>
         </div>
       </div>

@@ -9,6 +9,9 @@ export type MarkReading = {
   paint: { status: "present" | "absent" | "not_visible"; color: string | null; location: string | null };
   collar: { status: "present" | "absent" | "not_visible"; color: string | null };
   ear_notch: { status: "present" | "absent" | "not_visible"; side: "left" | "right" | "both" | "unknown" | null };
+  ear_tag: { status: "present" | "absent" | "not_visible"; color: string | null };
+  life_stage: "adult" | "puppy" | "unknown";
+  lead: { status: "present" | "absent" | "not_visible" };
   coat: string;
   view_quality: "good" | "fair" | "poor";
   confidence: number;
@@ -20,7 +23,7 @@ const tri = { type: "string", enum: ["present", "absent", "not_visible"] };
 export const MARK_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["is_dog", "paint", "collar", "ear_notch", "coat", "view_quality", "confidence", "reason"],
+  required: ["is_dog", "paint", "collar", "ear_notch", "ear_tag", "life_stage", "lead", "coat", "view_quality", "confidence", "reason"],
   properties: {
     is_dog: { type: "boolean" },
     paint: {
@@ -44,6 +47,14 @@ export const MARK_SCHEMA = {
         side: { type: ["string", "null"], enum: ["left", "right", "both", "unknown", null] },
       },
     },
+    ear_tag: {
+      type: "object",
+      additionalProperties: false,
+      required: ["status", "color"],
+      properties: { status: tri, color: { type: ["string", "null"] } },
+    },
+    life_stage: { type: "string", enum: ["adult", "puppy", "unknown"] },
+    lead: { type: "object", additionalProperties: false, required: ["status"], properties: { status: tri } },
     coat: { type: "string" },
     view_quality: { type: "string", enum: ["good", "fair", "poor"] },
     confidence: { type: "number" },
@@ -55,6 +66,9 @@ const INSTRUCTIONS = [
   "You read field marks on free-roaming dogs for a rabies vaccination survey.",
   "Vaccinated dogs are marked for a few days with livestock paint or crayon (a coloured patch, usually on the head or back) or with a temporary collar or band.",
   "Sterilized dogs carry a permanent V-shaped notch or a clipped tip on one ear.",
+  "Some city programmes clip a small plastic tag (often yellow, blue or white) into one ear of every dog they vaccinate. ear_tag is present only if you can see the tag; if one ear is hidden and the visible ear has no tag, use not_visible.",
+  "life_stage: puppy for a dog clearly under about six months (small, round head, oversized paws); otherwise adult; unknown if you cannot judge.",
+  "lead: present if the dog is on a lead or held by a person, which means it has an owner.",
   "Report only what you can see. If the body part that would carry a mark is not visible clearly enough to judge, use not_visible. Never guess.",
   "Natural coat patches are not paint. Ear sides are from the dog's own point of view.",
   "All images are crops of the same dog from one walk; some may be close-ups of an ear. Combine them.",

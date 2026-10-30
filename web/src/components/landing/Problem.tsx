@@ -15,15 +15,13 @@ export function Problem() {
       <div className="shell">
         <div className="grid grid-cols-12 gap-y-16 lg:gap-x-8">
           <div className="col-span-12 lg:col-span-6">
-            <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Rabies kills 59,000 people every year.</h2>
+            <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Rabies kills tens of thousands of people every year.</h2>
             <p className="lede mt-8 max-w-xl">
-              Four in ten are children. Almost every case starts with a dog bite, and every death is preventable: once
-              symptoms begin, rabies is almost always fatal, but a vaccinated dog cannot pass it on.
+              Four in ten are children, and 99% of cases start with a dog. Once symptoms begin, rabies is almost always fatal. A vaccinated dog cannot pass
+              it on.
             </p>
             <p className="mt-4 text-[0.875rem]">
-              <Source href="https://www.who.int/publications/m/item/zero-by-30-the-global-strategic-plan-to-prevent-humandeaths-from-dog-transmitted-rabies-by-2030">
-                World Health Organization, Zero by 30
-              </Source>
+              <Source href="https://www.who.int/news-room/fact-sheets/detail/rabies">World Health Organization, rabies fact sheet, 2026</Source>
             </p>
           </div>
           <div className="col-span-12 lg:col-span-6">

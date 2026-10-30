@@ -1,33 +1,39 @@
 const models = [
   {
     name: "SAM 3.1",
-    use: "Video tracking",
-    job: "Follows every dog through the walk with a stable identity, from the single word “dog”. This is the count.",
+    use: "Video tracking, dogs",
+    job: "Follows every dog through the walk from the single word “dog”, keeping its number while it stays in view. This is the count.",
     without: "Dogs get counted twice, or missed.",
   },
   {
     name: "SAM 3.1",
+    use: "Video tracking, people",
+    job: "Finds every person in every frame for one reason: to pixelate them inside their own outline before anyone sees the replay.",
+    without: "Footage of neighbours nobody should share.",
+  },
+  {
+    name: "SAM 3.1",
     use: "Image segmentation",
-    job: "Finds the ears and back on full-resolution close-ups, and blurs faces, number plates and signs before anything is shared.",
-    without: "Small marks are unreadable, and privacy depends on luck.",
+    job: "Finds the ears on each close-up, so a small tag or notch can be enlarged and read.",
+    without: "Small marks stay unreadable.",
   },
   {
     name: "Muse Spark",
     use: "Vision, structured output",
-    job: "Reads each dog’s paint mark, collar and ear notch into fixed fields, and says when it can’t see well enough to judge.",
-    without: "Marks are read by eye, and every reader reads them differently.",
+    job: "Reads paint, collars, ear tags and notches, notes puppies and dogs on a lead, says “can’t tell” when it can’t, and decides whether a dog that came back is one already counted.",
+    without: "Marks read by eye, differently by every reader.",
   },
   {
     name: "Muse Wonder",
     use: "Reasoning, web search",
-    job: "Writes the program report: the result, the next steps, and the national and WHO rules it relies on, each cited.",
+    job: "Writes the report for the office: the result, the next step, and the WHO and national rules it relies on, each cited.",
     without: "Numbers without a decision.",
   },
   {
     name: "Meta SAM client libraries",
     use: "Parsing and drawing",
-    job: "Decode SAM’s output and draw every outline on the walk video, frame by frame, in the browser.",
-    without: "No replay a manager can check.",
+    job: "Decode SAM’s output and draw every outline, label and blur on the video, frame by frame, in the browser.",
+    without: "No replay anyone could check.",
   },
 ];
 
@@ -37,17 +43,16 @@ export function Evidence() {
       <div className="shell">
         <div className="grid grid-cols-12 gap-y-10 lg:gap-x-8">
           <div className="col-span-12 lg:col-span-5">
-            <h2 className="display text-4xl md:text-[4rem] md:leading-[1.03]">Every number on the screen is a measurement.</h2>
+            <h2 className="display text-[2rem] sm:text-4xl md:text-[4rem] md:leading-[1.03]">Built on Meta’s models, one job each.</h2>
           </div>
           <div className="col-span-12 lg:col-span-6 lg:col-start-7">
             <p className="lede">
-              Seventy gives each of Meta’s models one job and keeps the arithmetic in plain code. Dogs are counted by
-              segmentation and tracking, coverage by a Wilson interval, populations by Chapman’s formula. When a model can’t
-              see something, it says so, and a person makes the call.
+              The arithmetic stays in plain code: tracks stitched across pieces of a long walk, a Wilson interval for coverage, Chapman’s formula for
+              populations. When a model can’t see something, it says so, and a person makes the call.
             </p>
             <p className="mt-6 text-ink-2">
-              A ten-minute walk costs about one US dollar of model time: around 3,000 video frames for SAM, a few cents of
-              reading for each dog, and one report.
+              It never follows people. SAM 3.1 looks for people only to blur them; nobody is tracked, counted or identified, and the original video stays
+              on the phone. A ten-minute walk costs about one US dollar of model time.
             </p>
           </div>
         </div>

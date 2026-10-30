@@ -1,0 +1,141 @@
+{
+ "note": "SAM 3.1 tracks of the first 13.4 s of Pexels clip 14938940 at 25 fps. Track 14 joined to 13: the 10 fps survey of the same clip followed that dog as one.",
+ "width": 1280,
+ "height": 720,
+ "dogs": [
+  {
+   "label": 1,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "0"
+    }
+   ]
+  },
+  {
+   "label": 2,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "1"
+    }
+   ]
+  },
+  {
+   "label": 3,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "2"
+    }
+   ]
+  },
+  {
+   "label": 4,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "3"
+    }
+   ]
+  },
+  {
+   "label": 5,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "4"
+    }
+   ]
+  },
+  {
+   "label": 6,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "5"
+    }
+   ]
+  },
+  {
+   "label": 7,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "6"
+    }
+   ]
+  },
+  {
+   "label": 8,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "7"
+    }
+   ]
+  },
+  {
+   "label": 9,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "8"
+    }
+   ]
+  },
+  {
+   "label": 10,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "9"
+    }
+   ]
+  },
+  {
+   "label": 11,
+   "firstS": 0,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "10"
+    }
+   ]
+  },
+  {
+   "label": 12,
+   "firstS": 0.08,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "11"
+    }
+   ]
+  },
+  {
+   "label": 13,
+   "firstS": 4.72,
+   "segments": [
+    {
+     "chunk": 0,
+     "objectId": "12"
+    },
+    {
+     "chunk": 0,
+     "objectId": "14"
+    }
+   ]
+  }
+ ]
+}

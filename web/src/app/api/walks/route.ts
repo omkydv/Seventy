@@ -29,7 +29,7 @@ const CreateWalk = z.object({
   areaName: z.string().max(120).optional(),
   country: z.string().trim().max(60).optional(),
   targetMark: z.enum(["vaccination", "sterilization"]).optional(),
-  markTypes: z.array(z.enum(["paint", "collar"])).max(2).optional(),
+  markTypes: z.array(z.enum(["paint", "collar", "ear_tag"])).max(3).optional(),
   recordedAt: z.string().datetime().nullable().optional(),
   durationS: z.number().positive().max(20 * 60),
   srcWidth: z.number().int().positive(),

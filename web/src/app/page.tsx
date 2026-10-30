@@ -1,11 +1,16 @@
 import { regionAround } from "@/components/PhotoCrop";
 import { Clipboard } from "@/components/landing/Clipboard";
-import { FinalCta, Footer, People } from "@/components/landing/Closing";
+import { FinalCta, Footer } from "@/components/landing/Closing";
+import { Compare } from "@/components/landing/Compare";
 import { Evidence } from "@/components/landing/Evidence";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks, type HowData } from "@/components/landing/HowItWorks";
+import { Next } from "@/components/landing/Next";
+import { Places } from "@/components/landing/Places";
+import { Possible } from "@/components/landing/Possible";
 import { Problem } from "@/components/landing/Problem";
-import { Teams } from "@/components/landing/Teams";
+import { Programme } from "@/components/landing/Programme";
+import { Proof } from "@/components/landing/Proof";
 import marks from "@/content/sam/lane-dawn-dog.marks.json";
 import { loadPhotoSegmentation } from "@/lib/sam/photos";
 import { chapman, coverage } from "@/lib/stats";
@@ -43,10 +48,14 @@ export default async function Home() {
         <Hero />
         <Problem />
         <Clipboard />
+        <Compare />
         <HowItWorks data={data} />
+        <Places />
+        <Programme />
+        <Proof />
         <Evidence />
-        <Teams />
-        <People />
+        <Possible />
+        <Next />
         <FinalCta />
       </main>
       <Footer />

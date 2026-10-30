@@ -10,7 +10,7 @@ import { api, ensureWorkspace } from "@/lib/client/workspace";
 import { duration } from "@/lib/format";
 
 type Mode = "plan" | "check";
-type Mark = "paint" | "collar" | "notch";
+type Mark = "paint" | "collar" | "ear_tag" | "notch";
 
 const FPS = 5;
 const COUNTRIES = ["Bangladesh", "Brazil", "Ethiopia", "Haiti", "India", "Indonesia", "Kenya", "Malawi", "Nepal", "Nigeria", "Pakistan", "Philippines", "South Africa", "Sri Lanka", "Tanzania", "Uganda", "Vietnam"];
@@ -211,6 +211,7 @@ export function NewWalkForm() {
                 [
                   ["paint", "Paint or crayon"],
                   ["collar", "Collar or band"],
+                  ["ear_tag", "Ear tag"],
                   ["notch", "Ear notch, for sterilization"],
                 ] as const
               ).map(([value, label]) => (

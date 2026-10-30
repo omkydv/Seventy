@@ -1,6 +1,6 @@
 import "server-only";
 
-import { coverage } from "@/lib/stats";
+import { walkStats, type StatDog } from "@/lib/stats";
 import { pickSamples, stitchChunks, type ChunkInput } from "@/lib/tracks";
 import { db, getBytes, getText, putText, signedReadUrl, signedUploadUrl } from "./db";
 import { classify, MARK_MODEL, readMarks, sparkCost, type MarkReading } from "./marks";
@@ -269,28 +269,13 @@ async function readNextDogs(walkId: string, walk: Record<string, unknown>) {
   if (!count) await finish(walkId, String(walk.target_mark));
 }
 
-type StatDog = { mark_status: string | null; review_status: string | null };
 
-export function statsFrom(dogs: StatDog[], target: string) {
-  let marked = 0;
-  let unmarked = 0;
-  let unknown = 0;
-  let excluded = 0;
-  for (const d of dogs) {
-    const s = d.review_status ?? d.mark_status ?? "unknown";
-    if (s === "not_a_dog" || s === "duplicate") excluded++;
-    else if (s === "marked") marked++;
-    else if (s === "unmarked") unmarked++;
-    else unknown++;
-  }
-  const c = coverage(marked, unmarked, unknown);
-  return { target, dogs: marked + unmarked + unknown, excluded, ...c };
-}
+export const statsFrom = (dogs: StatDog[], target: string) => walkStats(dogs, target);
 
 async function finish(walkId: string, target: string) {
-  const { data: dogs } = await db().from("dogs").select("mark_status, review_status").eq("walk_id", walkId);
+  const { data: dogs } = await db().from("dogs").select("mark_status, review_status, same_as, mark").eq("walk_id", walkId);
   const stats = statsFrom((dogs ?? []) as StatDog[], target);
-  const needsReview = (dogs ?? []).some((d) => (d.review_status ?? d.mark_status) === "unknown");
+  const needsReview = (dogs ?? []).some((d) => !d.same_as && (d.review_status ?? d.mark_status) === "unknown");
   await db()
     .from("walks")
     .update({ status: needsReview ? "review" : "done", stats, progress: { stage: needsReview ? "review" : "done" } })
@@ -304,12 +289,22 @@ export async function reviewDog(walkId: string, dogId: string, status: string) {
 }
 
 export async function state(walkId: string) {
-  const [{ data: walk }, { data: chunks }, { data: dogs }] = await Promise.all([
+  const [{ data: walk }, { data: chunks }, { data: dogs }, { data: usage }] = await Promise.all([
     db().from("walks").select("*").eq("id", walkId).single(),
-    db().from("chunks").select("idx, start_s, end_s, status, frames, objects, error, submitted_at, completed_at, tracks_path").eq("walk_id", walkId).order("idx"),
-    db().from("dogs").select("id, label, first_s, last_s, frames, mean_conf, segments, samples, crops, best_crop, mark, mark_status, mark_kind, review_status, reading_ms").eq("walk_id", walkId).order("label"),
+    db().from("chunks").select("idx, start_s, end_s, status, frames, objects, error, submitted_at, completed_at, tracks_path, people_path").eq("walk_id", walkId).order("idx"),
+    db()
+      .from("dogs")
+      .select("id, label, first_s, last_s, frames, mean_conf, segments, samples, crops, best_crop, mark, mark_status, mark_kind, review_status, review_note, same_as, reading_ms")
+      .eq("walk_id", walkId)
+      .order("label"),
+    db().from("usage_log").select("stage, model, units, unit, calls, seconds, cost_usd").eq("walk_id", walkId).order("id"),
   ]);
-  return { walk, chunks: chunks ?? [], dogs: dogs ?? [] };
+  // Possible repeats a model couldn't settle, for a person to decide.
+  const ids = (dogs ?? []).map((d) => d.id as string);
+  const { data: matches } = ids.length
+    ? await db().from("matches").select("dog_a, dog_b, verdict, reason").in("dog_b", ids)
+    : { data: [] as { dog_a: string; dog_b: string; verdict: string; reason: string }[] };
+  return { walk, chunks: chunks ?? [], dogs: dogs ?? [], usage: usage ?? [], repeats: matches ?? [] };
 }
 
 /** Short-lived URLs the browser needs to show a walk: chunk videos, SAM text, dog crops. */
@@ -320,15 +315,22 @@ export async function mediaUrls(walkId: string) {
       const pad = String(c.idx).padStart(3, "0");
       const video = await signedReadUrl(`${walkId}/chunks/${pad}.mp4`, 3600).catch(() => null);
       const sam = c.status === "done" ? await signedReadUrl(`${walkId}/sam/${pad}.txt`, 3600).catch(() => null) : null;
-      return { idx: c.idx, video, sam };
+      const people = c.people_path ? await signedReadUrl(c.people_path as string, 3600).catch(() => null) : null;
+      return { idx: c.idx, video, sam, people };
     }),
   );
   const crops: Record<string, string[]> = {};
+  const ears: Record<string, string[]> = {};
   await Promise.all(
     dogs.map(async (d) => {
-      const list = ((d.crops ?? []) as { path: string }[]).slice(0, 3);
-      crops[d.id] = await Promise.all(list.map((c) => signedReadUrl(c.path, 3600)));
+      const all = (d.crops ?? []) as { path: string; kind?: string }[];
+      const body = all.filter((c) => c.kind !== "ear").slice(0, 3);
+      const ear = all.filter((c) => c.kind === "ear").slice(0, 2);
+      [crops[d.id], ears[d.id]] = await Promise.all([
+        Promise.all(body.map((c) => signedReadUrl(c.path, 3600))),
+        Promise.all(ear.map((c) => signedReadUrl(c.path, 3600))),
+      ]);
     }),
   );
-  return { chunks: chunkMedia, crops };
+  return { chunks: chunkMedia, crops, ears };
 }

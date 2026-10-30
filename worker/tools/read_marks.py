@@ -23,6 +23,11 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env.local")
+sys.path.insert(0, str(ROOT / "worker"))
+sys.path.insert(0, str(ROOT / "worker" / "tools"))
+
+from annotate_frames import BOX  # noqa: E402
+from seventy import sam  # noqa: E402
 
 API = os.environ.get("MODEL_API_BASE", "https://api.meta.ai/v1")
 KEY = os.environ["MODEL_API_KEY"]
@@ -31,7 +36,7 @@ TRI = {"type": "string", "enum": ["present", "absent", "not_visible"]}
 SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["is_dog", "paint", "collar", "ear_notch", "coat", "view_quality", "confidence", "reason"],
+    "required": ["is_dog", "paint", "collar", "ear_notch", "ear_tag", "life_stage", "lead", "coat", "view_quality", "confidence", "reason"],
     "properties": {
         "is_dog": {"type": "boolean"},
         "paint": {"type": "object", "additionalProperties": False, "required": ["status", "color", "location"],
@@ -40,6 +45,10 @@ SCHEMA = {
                    "properties": {"status": TRI, "color": {"type": ["string", "null"]}}},
         "ear_notch": {"type": "object", "additionalProperties": False, "required": ["status", "side"],
                       "properties": {"status": TRI, "side": {"type": ["string", "null"], "enum": ["left", "right", "both", "unknown", None]}}},
+        "ear_tag": {"type": "object", "additionalProperties": False, "required": ["status", "color"],
+                    "properties": {"status": TRI, "color": {"type": ["string", "null"]}}},
+        "life_stage": {"type": "string", "enum": ["adult", "puppy", "unknown"]},
+        "lead": {"type": "object", "additionalProperties": False, "required": ["status"], "properties": {"status": TRI}},
         "coat": {"type": "string"},
         "view_quality": {"type": "string", "enum": ["good", "fair", "poor"]},
         "confidence": {"type": "number"},
@@ -50,6 +59,9 @@ INSTRUCTIONS = " ".join([
     "You read field marks on free-roaming dogs for a rabies vaccination survey.",
     "Vaccinated dogs are marked for a few days with livestock paint or crayon (a coloured patch, usually on the head or back) or with a temporary collar or band.",
     "Sterilized dogs carry a permanent V-shaped notch or a clipped tip on one ear.",
+    "Some city programmes clip a small plastic tag (often yellow, blue or white) into one ear of every dog they vaccinate. ear_tag is present only if you can see the tag; if one ear is hidden and the visible ear has no tag, use not_visible.",
+    "life_stage: puppy for a dog clearly under about six months (small, round head, oversized paws); otherwise adult; unknown if you cannot judge.",
+    "lead: present if the dog is on a lead or held by a person, which means it has an owner.",
     "Report only what you can see. If the body part that would carry a mark is not visible clearly enough to judge, use not_visible. Never guess.",
     "Natural coat patches are not paint. Ear sides are from the dog's own point of view.",
     "All images are crops of the same dog from one walk; some may be close-ups of an ear. Combine them.",
@@ -88,12 +100,44 @@ def to_data_url(img: np.ndarray) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(buf.tobytes()).decode()
 
 
-def read(images: list[np.ndarray]) -> tuple[dict, dict, float]:
+def ear_zooms(crop: np.ndarray, limit: int = 2) -> tuple[list[np.ndarray], int]:
+    """SAM 3.1 finds the ears on a close-up; return them enlarged, so a small tag or notch is readable."""
+    try:
+        _, info = sam.segment_image(to_data_url(crop), "dog ear")
+    except Exception as e:  # an ear zoom is a bonus; the reading goes on without it
+        print("ear zoom failed:", e)
+        return [], 1
+    found = []
+    for m in BOX.finditer(info["raw_text"]):
+        _, x1, y1, x2, y2, w, h = m.groups()
+        W, H = float(w), float(h)
+        conf = float(m.group(0).split("c=")[-1]) if "c=" in m.group(0) else 0.5
+        found.append((conf, int(x1) / W, int(y1) / H, int(x2) / W, int(y2) / H))
+    found.sort(reverse=True)
+    out = []
+    ch, cw = crop.shape[:2]
+    for _, l, t, r, b in found[:limit]:
+        pw, ph = (r - l) * 0.5, (b - t) * 0.5
+        x0, y0 = max(0, int((l - pw) * cw)), max(0, int((t - ph) * ch))
+        x1, y1 = min(cw, int((r + pw) * cw)), min(ch, int((b + ph) * ch))
+        if x1 - x0 < 8 or y1 - y0 < 8:
+            continue
+        ear = crop[y0:y1, x0:x1]
+        scale = max(1.0, 320 / min(ear.shape[:2]))
+        out.append(cv2.resize(ear, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC))
+    return out, 1
+
+
+def read(images: list[np.ndarray], ears: list[np.ndarray] | None = None) -> tuple[dict, dict, float]:
+    ears = ears or []
+    prompt = "Read the marks on this dog."
+    if ears:
+        prompt += f" The last {len(ears)} images are enlarged close-ups of its ears, found by SAM 3.1; look there for a tag or a notch."
     body = {
         "model": "muse-spark-1.3",
         "instructions": INSTRUCTIONS,
-        "input": [{"role": "user", "content": [{"type": "input_text", "text": "Read the marks on this dog."}]
-                   + [{"type": "input_image", "image_url": to_data_url(i)} for i in images]}],
+        "input": [{"role": "user", "content": [{"type": "input_text", "text": prompt}]
+                   + [{"type": "input_image", "image_url": to_data_url(i)} for i in images + ears]}],
         "reasoning": {"effort": "low"},
         "text": {"format": {"type": "json_schema", "name": "dog_marks", "schema": SCHEMA, "strict": True}},
     }
@@ -105,18 +149,20 @@ def read(images: list[np.ndarray]) -> tuple[dict, dict, float]:
     return json.loads(text), j.get("usage") or {}, time.time() - t0
 
 
+FIELD = {"paint": "paint", "collar": "collar", "ear_tag": "ear_tag"}
+
+
 def classify(m: dict, target: str, kinds: list[str]) -> str:
+    """Same rules as web/src/lib/marks.ts."""
     if not m["is_dog"]:
         return "unknown"
     if target == "sterilization":
         s = m["ear_notch"]["status"]
         return "marked" if s == "present" else "unmarked" if s == "absent" and m["view_quality"] != "poor" else "unknown"
-    if "paint" in kinds and m["paint"]["status"] == "present":
+    used = [FIELD[k] for k in kinds if k in FIELD]
+    if any(m[f]["status"] == "present" for f in used):
         return "marked"
-    if "collar" in kinds and m["collar"]["status"] == "present":
-        return "marked"
-    seen = [m["paint"]["status"] if "paint" in kinds else "absent", m["collar"]["status"] if "collar" in kinds else "absent"]
-    return "unmarked" if all(s == "absent" for s in seen) and m["view_quality"] != "poor" else "unknown"
+    return "unmarked" if all(m[f]["status"] == "absent" for f in used) and m["view_quality"] != "poor" else "unknown"
 
 
 def main() -> None:
@@ -139,8 +185,17 @@ def main() -> None:
         imgs = per_dog.get(d["label"], [])
         if not imgs:
             return {"label": d["label"], "status": "unknown", "mark": None}
-        mark, usage, secs = read(imgs)
-        return {"label": d["label"], "status": classify(mark, target, kinds), "mark": mark, "seconds": round(secs, 1), "usage": usage}
+        ears: list[np.ndarray] = []
+        sam_calls = 0
+        for c in imgs[:2]:
+            found, calls = ear_zooms(c, limit=1)
+            ears += found
+            sam_calls += calls
+        for i, e in enumerate(ears):
+            cv2.imwrite(str(out / f"dog{d['label']:02d}_ear{i}.jpg"), e)
+        mark, usage, secs = read(imgs, ears)
+        return {"label": d["label"], "status": classify(mark, target, kinds), "mark": mark, "seconds": round(secs, 1),
+                "usage": usage, "ears": len(ears), "sam_image_calls": sam_calls}
 
     with ThreadPoolExecutor(max_workers=6) as pool:
         results = list(pool.map(work, dogs))

@@ -64,6 +64,45 @@ export function coverage(marked: number, unmarked: number, unknown: number, targ
   };
 }
 
+export type StatDog = {
+  mark_status: string | null;
+  review_status: string | null;
+  same_as?: number | null;
+  mark?: { life_stage?: string; lead?: { status: string } } | null;
+};
+
+/**
+ * A walk's numbers. A dog seen again after leaving the frame counts once, a
+ * person's review stands over the model's reading, and anything that isn't a
+ * dog is left out.
+ */
+export function walkStats(dogs: StatDog[], target: string) {
+  let marked = 0;
+  let unmarked = 0;
+  let unknown = 0;
+  let excluded = 0;
+  let repeats = 0;
+  let puppies = 0;
+  let onLead = 0;
+  for (const d of dogs) {
+    if (d.same_as) {
+      repeats++;
+      continue;
+    }
+    const s = d.review_status ?? d.mark_status ?? "unknown";
+    if (s === "not_a_dog" || s === "duplicate") {
+      excluded++;
+      continue;
+    }
+    if (s === "marked") marked++;
+    else if (s === "unmarked") unmarked++;
+    else unknown++;
+    if (d.mark?.life_stage === "puppy") puppies++;
+    if (d.mark?.lead?.status === "present") onLead++;
+  }
+  return { target, dogs: marked + unmarked + unknown, excluded, repeats, puppies, onLead, ...coverage(marked, unmarked, unknown) };
+}
+
 export type Population = { n: number; low: number; high: number; se: number };
 
 /**

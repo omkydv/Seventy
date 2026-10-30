@@ -1,0 +1,58 @@
+{
+  "note": "Measured on Oct 30, 2026. Hand counts were made frame by frame on the original clips. Costs are from the usage log of each sample survey.",
+  "samples": [
+    {
+      "slug": "mountain-village",
+      "walk": "35ffd9de-fba1-4eca-b699-88778ea210eb",
+      "title": "Mountain village square",
+      "place": "A mountain village at dusk",
+      "mode": "Count before a drive",
+      "seconds": 20,
+      "seventy": 13,
+      "hand": 13,
+      "line": "A pack of 13 crossing a dirt square, every one counted once while the camera walks through them.",
+      "cost": 0.195,
+      "samSeconds": 58
+    },
+    {
+      "slug": "seaside-promenade",
+      "walk": "887a06c9-3011-48c2-83ea-8ed9214ec3fe",
+      "title": "Seaside promenade",
+      "place": "A seaside town",
+      "mode": "Ear-tag check",
+      "seconds": 22,
+      "seventy": 8,
+      "hand": 9,
+      "line": "One street dog carries a municipal ear tag. Muse Spark couldn’t be sure at that distance; a person confirmed it from SAM’s ear close-up.",
+      "missed": "A dark dog lying flat on the lawn, far from the camera.",
+      "cost": 0.174,
+      "samSeconds": 74
+    },
+    {
+      "slug": "market-street",
+      "walk": "d6c5b703-c632-43ba-b7dd-85fe07ad85e4",
+      "title": "Market street",
+      "place": "A busy city market",
+      "mode": "Count before a drive",
+      "seconds": 6,
+      "seventy": 4,
+      "hand": 4,
+      "line": "Four dogs eating scraps close to the lens, with a crowd behind them. Every person is blurred.",
+      "cost": 0.072,
+      "samSeconds": 61
+    },
+    {
+      "slug": "village-lane",
+      "walk": "4069e042-3b8d-448b-b4a2-7e6aa117449b",
+      "title": "Village lane",
+      "place": "A village in the tropics",
+      "mode": "Count before a drive",
+      "seconds": 16,
+      "seventy": 2,
+      "hand": 2,
+      "line": "A quiet lane with two dogs and a child passing. The child is blurred.",
+      "cost": 0.085,
+      "samSeconds": 32
+    }
+  ]
+}

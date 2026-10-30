@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CoverageMeter } from "@/components/CoverageMeter";
 import { DogGlyph, type GlyphStatus } from "@/components/DogGlyph";
-import { WalkReplay } from "@/components/WalkReplay";
+import { DogTimeline } from "@/components/DogTimeline";
+import { WalkReplay, type ReplayHandle } from "@/components/WalkReplay";
 import { api } from "@/lib/client/workspace";
 import { clock, plural } from "@/lib/format";
-import { TARGET } from "@/lib/stats";
-import { effectiveStatus, type Dog, type WalkState } from "@/lib/types";
+import { MARK_NAMES, type VaccinationMark } from "@/lib/marks";
+import { TARGET, walkStats } from "@/lib/stats";
+import { effectiveStatus, type Dog, type UsageRow, type WalkState, type WalkStats } from "@/lib/types";
 import { ReportPanel } from "./ReportPanel";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -15,10 +17,20 @@ const STATUS_TEXT: Record<string, string> = {
   unmarked: "Not marked",
   unknown: "Can’t tell",
   not_a_dog: "Not a dog",
-  duplicate: "Duplicate",
+  duplicate: "Seen again",
 };
 
-const glyphFor = (s: string): GlyphStatus => (s === "marked" ? "marked" : s === "unknown" ? "unknown" : s === "unmarked" ? "unmarked" : "empty");
+const glyphFor = (s: string): GlyphStatus =>
+  s === "marked" ? "marked" : s === "unknown" ? "unknown" : s === "unmarked" || s === "counted" ? "unmarked" : "empty";
+
+/**
+ * Before a drive the question is how many dogs, not which are marked, so a dog
+ * whose mark can't be read is drawn as simply counted.
+ */
+const shownStatus = (d: Dog, mode: string) => {
+  const s = effectiveStatus(d);
+  return mode === "plan" && (s === "unknown" || s === "unmarked") ? "counted" : s;
+};
 
 const CHIP_TONE: Record<string, string> = {
   marked: "bg-mark-soft",
@@ -28,53 +40,40 @@ const CHIP_TONE: Record<string, string> = {
 
 function StatusChip({ status }: { status: string }) {
   return (
-    <span className={`pill text-ink ${CHIP_TONE[status] ?? "bg-canvas-2 text-ink-3 line-through"}`}>
+    <span className={`pill text-ink ${CHIP_TONE[status] ?? "bg-canvas-2 text-ink-3"}`}>
       <DogGlyph status={glyphFor(status)} size={18} />
       {STATUS_TEXT[status]}
     </span>
   );
 }
 
-function Legend() {
+function Legend({ mode }: { mode: string }) {
+  const items: [GlyphStatus, string][] =
+    mode === "plan"
+      ? [
+          ["unmarked", "Counted"],
+          ["marked", "Already marked"],
+        ]
+      : [
+          ["marked", STATUS_TEXT.marked],
+          ["unmarked", STATUS_TEXT.unmarked],
+          ["unknown", STATUS_TEXT.unknown],
+        ];
   return (
-    <p className="flex flex-wrap gap-x-5 gap-y-1 text-[0.875rem] text-ink-2">
-      {(["marked", "unmarked", "unknown"] as const).map((s) => (
-        <span key={s} className="flex items-center gap-1.5">
-          <DogGlyph status={s} size={18} /> {STATUS_TEXT[s]}
+    <p className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-ink-2">
+      {items.map(([g, text]) => (
+        <span key={text} className="flex items-center gap-1.5">
+          <DogGlyph status={g} size={16} /> {text}
         </span>
       ))}
     </p>
   );
 }
 
-/** Every dog on the walk, as the landing page draws them, linked to its card. */
-function DogRow({ dogs }: { dogs: Dog[] }) {
-  return (
-    <div className="-mx-7 -mb-7 mt-10 rounded-b-[24px] bg-surface-2 px-7 pb-7 pt-6 md:-mx-10 md:-mb-10 md:px-10 md:pb-9">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-        <p className="num text-[0.9375rem] font-semibold text-ink-2">{plural(dogs.length, "dog")} on this walk, each counted once</p>
-        <Legend />
-      </div>
-      <div className="mt-4 flex flex-wrap gap-1">
-        {dogs.map((d) => {
-          const s = effectiveStatus(d);
-          return (
-            <a
-              key={d.id}
-              href={`#dog-${d.label}`}
-              className="rounded-lg p-1 transition-colors hover:bg-canvas-2"
-              aria-label={`Dog ${d.label}, ${STATUS_TEXT[s]}`}
-            >
-              <DogGlyph status={glyphFor(s)} size={34} />
-            </a>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+const NOUN: Record<VaccinationMark, string> = { paint: "paint", collar: "collar", ear_tag: "ear tag" };
 
-function markLine(d: Dog, target: string): string {
+/** What the reading says about the marks this walk is looking for, in one plain line. */
+function markLine(d: Dog, target: string, markTypes: string[]): string {
   const m = d.mark;
   if (!m || m.error || m.skipped) return m?.error ? "The reading failed for this dog." : "No close-up was available.";
   if (!m.is_dog) return "The model doesn’t think this is a dog.";
@@ -85,45 +84,65 @@ function markLine(d: Dog, target: string): string {
         ? "No ear notch"
         : "Ears not visible";
   }
-  const paint =
-    m.paint.status === "present"
-      ? `Paint${m.paint.color ? `, ${m.paint.color}` : ""}${m.paint.location ? ` on the ${m.paint.location}` : ""}`
-      : m.paint.status === "absent"
-        ? "No paint"
-        : "Paint not visible";
-  const collar =
-    m.collar.status === "present" ? `collar${m.collar.color ? `, ${m.collar.color}` : ""}` : m.collar.status === "absent" ? "no collar" : "collar not visible";
-  return `${paint}, ${collar}`;
+  const types = (["paint", "collar", "ear_tag"] as const).filter((k) => markTypes.includes(k));
+  const parts = types.map((k) => {
+    const status = k === "ear_tag" ? (m.ear_tag?.status ?? "not_visible") : m[k].status;
+    const color = k === "ear_tag" ? m.ear_tag?.color : k === "collar" ? m.collar.color : m.paint.color;
+    if (status === "present") return `${MARK_NAMES[k].split(" or ")[0]}${color ? `, ${color}` : ""}`;
+    return status === "absent" ? `no ${NOUN[k]}` : `${NOUN[k]} not visible`;
+  });
+  const line = parts.join(", ");
+  return line.charAt(0).toUpperCase() + line.slice(1);
 }
 
-function Verdict({ state }: { state: WalkState }) {
-  const { walk, dogs } = state;
-  const st = walk.stats;
-  if (!st) return null;
+/** Every dog on the walk, as the landing page draws them. */
+function GlyphRow({ dogs, mode }: { dogs: Dog[]; mode: string }) {
+  return (
+    <div className="mt-6 border-t border-line pt-5">
+      <Legend mode={mode} />
+      <div className="mt-3 flex flex-wrap gap-0.5">
+        {dogs
+          .filter((d) => effectiveStatus(d) !== "duplicate")
+          .map((d) => {
+            const s = shownStatus(d, mode);
+            return (
+              <a key={d.id} href={`#dog-${d.label}`} className="rounded-md p-0.5 transition-colors hover:bg-canvas-2" aria-label={`Dog ${d.label}, ${STATUS_TEXT[s]}`}>
+                <DogGlyph status={glyphFor(s)} size={26} />
+              </a>
+            );
+          })}
+      </div>
+    </div>
+  );
+}
+
+function Verdict({ walk, st, dogs }: { walk: WalkState["walk"]; st: WalkStats; dogs: Dog[] }) {
+  const short = (walk.duration_s ?? 0) < 90;
+  const extras = [
+    st.repeats ? `${plural(st.repeats, "dog")} seen again, counted once` : null,
+    st.puppies ? `${plural(st.puppies, "puppy", "puppies")} among them` : null,
+    st.onLead ? `${plural(st.onLead, "dog")} on a lead, with an owner` : null,
+  ].filter(Boolean) as string[];
 
   if (walk.mode === "plan") {
     const n = st.dogs;
     return (
-      <section className="panel mt-10 p-7 md:p-10">
-        <div className="grid grid-cols-12 gap-y-6 md:gap-x-8">
-          <div className="col-span-12 md:col-span-6">
-            <p className="text-[0.9375rem] font-semibold text-ink-2">Dogs on this walk</p>
-            <p className="display num mt-2 text-7xl md:text-8xl">{n}</p>
-            <p className="mt-2 text-ink-2">Each one counted once, across the whole walk.</p>
-          </div>
-          <div className="col-span-12 self-end md:col-span-6">
-            <p className="text-xl font-semibold tracking-[-0.01em]">Carry at least {plural(Math.ceil(TARGET * n), "dose")} to reach 70% of the dogs seen.</p>
-            <p className="mt-3 text-ink-2">
-              More dogs live here than one walk sees. Walk the same route on another morning and Seventy will estimate the whole population.
-            </p>
-            {st.marked > 0 && (
-              <p className="num mt-4 text-[0.9375rem] text-ink-3">
-                {plural(st.marked, "dog")} already carry a mark, and {plural(st.unknown, "dog")} couldn’t be read.
-              </p>
-            )}
-          </div>
-        </div>
-        <DogRow dogs={dogs} />
+      <section className="panel p-6 md:p-7">
+        <p className="text-[0.9375rem] font-semibold text-ink-2">Dogs on this walk</p>
+        <p className="display num mt-1 text-7xl">{n}</p>
+        <p className="mt-1 text-ink-2">Each one counted once.</p>
+        <p className="mt-5 text-lg font-semibold leading-snug tracking-[-0.01em]">Bring at least {plural(Math.ceil(TARGET * n), "dose")} to reach 70% of the dogs seen.</p>
+        {extras.length > 0 && (
+          <ul className="num mt-4 space-y-1 text-[0.9375rem] text-ink-2">
+            {extras.map((e) => (
+              <li key={e}>{e.charAt(0).toUpperCase() + e.slice(1)}.</li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-4 text-[0.875rem] leading-relaxed text-ink-3">
+          {short ? "A short clip, not a full survey walk. " : ""}More dogs live here than one walk sees; two walks of the same route give a population estimate.
+        </p>
+        <GlyphRow dogs={dogs} mode="plan" />
       </section>
     );
   }
@@ -144,54 +163,108 @@ function Verdict({ state }: { state: WalkState }) {
         ? "The estimate clears the line but the interval does not. One more street would settle it."
         : st.status === "below"
           ? `Vaccinate about ${plural(st.toGo, "more dog")} among those seen to reach 70%, then check again.`
-          : "Film a longer walk through the area before deciding.";
+          : short
+            ? "A short clip can’t settle an area. A ten-minute walk would."
+            : "Film a longer walk through the area before deciding.";
   // A percentage from a handful of dogs reads as a finding, so a thin walk leads with what is missing instead.
   const enough = st.status !== "insufficient";
+  const mark = walk.mark_types?.length === 1 ? MARK_NAMES[walk.mark_types[0] as VaccinationMark] : null;
 
   return (
-    <section className="panel mt-10 p-7 md:p-10">
-      <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
-        <div className="max-w-2xl">
-          <p className="text-[0.9375rem] font-semibold text-ink-2">
-            {walk.target_mark === "sterilization" ? "Sterilization coverage" : "Vaccination coverage"}
+    <section className="panel p-6 md:p-7">
+      <p className="text-[0.9375rem] font-semibold text-ink-2">
+        {walk.target_mark === "sterilization" ? "Sterilization coverage" : "Vaccination coverage"}
+        {mark ? <span className="font-normal text-ink-3">, read from the {mark.toLowerCase()}</span> : null}
+      </p>
+      {enough ? (
+        <>
+          <p className="display num mt-1 text-7xl">{(ci.p * 100).toFixed(0)}%</p>
+          <span className={`pill mt-2 text-ink ${pill.tone}`}>{pill.text}</span>
+        </>
+      ) : (
+        <>
+          <p className="display mt-2 text-balance text-[2.25rem] leading-[1.04]">Not enough dogs yet.</p>
+          <p className="num mt-3 text-ink-2">
+            Seventy could read {st.readable ? st.readable : "none"} of the {plural(st.dogs, "dog")}. It makes a call once it can read ten.
           </p>
-          {enough ? (
-            <>
-              <p className="display num mt-2 text-7xl md:text-8xl">{(ci.p * 100).toFixed(1)}%</p>
-              <span className={`pill mt-3 text-ink ${pill.tone}`}>{pill.text}</span>
-            </>
-          ) : (
-            <>
-              <p className="display mt-3 text-balance text-[2.5rem] sm:text-5xl md:text-6xl">Not enough dogs yet.</p>
-              <p className="num mt-4 text-lg text-ink-2">
-                Seventy could read {st.readable ? st.readable : "none"} of the {plural(st.dogs, "dog")} on this walk. It makes a call once it can read ten.
-              </p>
-            </>
-          )}
-        </div>
-        <dl className="num grid grid-cols-[auto_auto] gap-x-8 gap-y-2 text-[0.9375rem]">
-          <dt className="text-ink-3">95% interval</dt>
-          <dd className="text-right font-semibold">
-            {(ci.low * 100).toFixed(1)} to {(ci.high * 100).toFixed(1)}%
-          </dd>
-          <dt className="text-ink-3">Marked</dt>
-          <dd className="text-right font-semibold">{st.marked}</dd>
-          <dt className="text-ink-3">Not marked</dt>
-          <dd className="text-right font-semibold">{st.unmarked}</dd>
-          <dt className="text-ink-3">Can’t tell</dt>
-          <dd className="text-right font-semibold">{st.unknown}</dd>
-        </dl>
-      </div>
-      <div className="mt-10">
-        <CoverageMeter p={ci.p} low={ci.low} high={ci.high} immediate />
-      </div>
-      <p className="mt-6 text-lg font-semibold tracking-[-0.01em]">{next}</p>
-      {st.unknown > 0 && (
-        <p className="num mt-2 text-[0.9375rem] text-ink-3">
-          If every dog it couldn’t read were marked, coverage would be {(st.best * 100).toFixed(0)}%; if none were, {(st.worst * 100).toFixed(0)}%.
-        </p>
+        </>
       )}
-      <DogRow dogs={dogs} />
+      <dl className="num mt-5 grid grid-cols-[1fr_auto] gap-y-1.5 text-[0.9375rem]">
+        <dt className="text-ink-3">Marked</dt>
+        <dd className="text-right font-semibold">{st.marked}</dd>
+        <dt className="text-ink-3">Not marked</dt>
+        <dd className="text-right font-semibold">{st.unmarked}</dd>
+        <dt className="text-ink-3">Can’t tell</dt>
+        <dd className="text-right font-semibold">{st.unknown}</dd>
+        {enough && (
+          <>
+            <dt className="text-ink-3">95% interval</dt>
+            <dd className="text-right font-semibold">
+              {(ci.low * 100).toFixed(0)} to {(ci.high * 100).toFixed(0)}%
+            </dd>
+          </>
+        )}
+      </dl>
+      {enough && (
+        <div className="mt-6">
+          <CoverageMeter p={ci.p} low={ci.low} high={ci.high} immediate />
+        </div>
+      )}
+      <p className="mt-5 font-semibold leading-snug tracking-[-0.01em]">{next}</p>
+      {extras.length > 0 && <p className="num mt-2 text-[0.875rem] text-ink-3">{extras.join(". ")}.</p>}
+      <GlyphRow dogs={dogs} mode="check" />
+    </section>
+  );
+}
+
+function SurveyPlayer({
+  state,
+  dogs,
+  selected,
+  onSelect,
+  replayRef,
+}: {
+  state: WalkState;
+  dogs: Dog[];
+  selected: number | null;
+  onSelect: (label: number) => void;
+  replayRef: React.RefObject<ReplayHandle | null>;
+}) {
+  const [time, setTime] = useState(0);
+  const media = state.media?.chunks ?? [];
+  const chunks = state.chunks
+    .map((c) => {
+      const m = media.find((x) => x.idx === c.idx);
+      return m?.video && m.sam ? { idx: c.idx, startS: c.start_s, video: m.video, sam: m.sam, people: m.people ?? null } : null;
+    })
+    .filter((c): c is NonNullable<typeof c> => c != null);
+  const mode = state.walk.mode;
+  const replayDogs = useMemo(() => dogs.map((d) => ({ label: d.label, status: shownStatus(d, mode), segments: d.segments ?? [] })), [dogs, mode]);
+  if (!chunks.length) return null;
+  const w = state.walk;
+  const aspect = w.proc_width && w.proc_height ? w.proc_width / w.proc_height : w.src_width && w.src_height ? w.src_width / w.src_height : 16 / 9;
+  const people = media.some((m) => m.people);
+  return (
+    <section aria-label="The walk, as SAM 3.1 tracked it">
+      <WalkReplay ref={replayRef} chunks={chunks} dogs={replayDogs} aspect={aspect} selected={selected} onTime={setTime} />
+      <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h2 className="font-semibold">Every dog, one line each</h2>
+        <p className="text-[0.875rem] text-ink-3">
+          From the first frame SAM 3.1 sees a dog to the last.{people ? " People are blurred." : ""}
+        </p>
+      </div>
+      <div className="mt-3">
+        <DogTimeline
+          dogs={dogs.map((d) => ({ label: d.label, status: shownStatus(d, mode), first_s: d.first_s, last_s: d.last_s }))}
+          duration={w.duration_s ?? Math.max(...dogs.map((d) => d.last_s), 1)}
+          time={time}
+          selected={selected}
+          onPick={(label, at) => {
+            onSelect(label);
+            replayRef.current?.seek(at);
+          }}
+        />
+      </div>
     </section>
   );
 }
@@ -199,21 +272,35 @@ function Verdict({ state }: { state: WalkState }) {
 function DogCard({
   d,
   crop,
+  ears,
   target,
+  markTypes,
   canReview,
   busy,
+  selected,
+  repeatOf,
+  repeatReason,
   onReview,
+  onShow,
 }: {
   d: Dog;
   crop?: string;
+  ears: string[];
   target: string;
+  markTypes: string[];
   canReview: boolean;
   busy: boolean;
+  selected: boolean;
+  repeatOf: number | null;
+  repeatReason: string | null;
   onReview: (status: string) => void;
+  onShow: () => void;
 }) {
   const s = effectiveStatus(d);
+  const facts = [d.mark?.lead?.status === "present" ? "On a lead" : null, d.mark?.life_stage === "puppy" ? "Puppy" : null].filter(Boolean) as string[];
+  const askRepeat = repeatOf != null && !d.review_status;
   return (
-    <li id={`dog-${d.label}`} className="panel scroll-mt-24 overflow-hidden">
+    <li id={`dog-${d.label}`} className={`panel scroll-mt-24 overflow-hidden transition-shadow ${selected ? "ring-2 ring-focus/50" : ""}`}>
       <div className="relative aspect-[4/3] bg-canvas-2">
         {crop ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -223,19 +310,60 @@ function DogCard({
             <DogGlyph status={glyphFor(s)} size={56} />
           </span>
         )}
+        {ears.length > 0 && (
+          <span className="absolute bottom-3 right-3 flex gap-1.5">
+            {ears.map((src, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={src} src={src} alt={`Ear ${i + 1} of dog ${d.label}, enlarged`} className="size-16 rounded-[10px] object-cover shadow-[0_4px_14px_-4px_rgb(12_26_40/0.6)] ring-2 ring-white" />
+            ))}
+          </span>
+        )}
       </div>
       <div className="p-5">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-lg font-semibold tracking-[-0.01em]">Dog {d.label}</p>
+          <button type="button" onClick={onShow} className="text-lg font-semibold tracking-[-0.01em] hover:text-ink-2" title="Show this dog in the video">
+            Dog {d.label}
+          </button>
           <StatusChip status={s} />
         </div>
-        <p className="mt-2 text-[0.9375rem] text-ink-2">{markLine(d, target)}</p>
+        {facts.length > 0 && (
+          <p className="mt-2 flex flex-wrap gap-1.5">
+            {facts.map((f) => (
+              <span key={f} className="pill h-6 bg-canvas-2 px-2.5 text-[0.75rem] text-ink-2">
+                {f}
+              </span>
+            ))}
+          </p>
+        )}
+        <p className="mt-2 text-[0.9375rem] text-ink-2">{markLine(d, target, markTypes)}</p>
         {d.mark && !d.mark.error && !d.mark.skipped && <p className="mt-2 text-[0.9375rem] text-ink-3">{d.mark.reason}</p>}
+        {d.review_note && (
+          <p className="mt-3 rounded-[12px] bg-mark-soft px-3 py-2 text-[0.875rem] text-ink">
+            <span className="font-semibold">Checked by a person.</span> {d.review_note.replace(/\s*Checked by a person\.?$/, "")}
+          </p>
+        )}
+        {d.same_as != null && <p className="mt-3 text-[0.875rem] text-ink-3">The same dog as Dog {d.same_as}, so it is counted once.</p>}
+        {askRepeat && (
+          <div className="mt-3 rounded-[12px] bg-canvas px-3 py-2.5 text-[0.875rem]">
+            <p>
+              <span className="font-semibold">Might be Dog {repeatOf} again.</span> <span className="text-ink-2">{repeatReason}</span>
+            </p>
+            {canReview && (
+              <div className="mt-2 flex gap-2">
+                <button type="button" disabled={busy} onClick={() => onReview("duplicate")} className="btn btn-secondary btn-sm h-8">
+                  Same dog
+                </button>
+                <button type="button" disabled={busy} onClick={() => onReview(d.mark_status ?? "unknown")} className="btn btn-secondary btn-sm h-8">
+                  Different dogs
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         <p className="num mt-3 text-[0.8125rem] text-ink-3">
           Seen {clock(d.first_s)} to {clock(d.last_s)}
-          {d.review_status ? ", checked by a person" : ""}
         </p>
-        {canReview && (
+        {canReview && d.same_as == null && (
           <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-[12px] bg-canvas p-1" role="group" aria-label={`Your call on dog ${d.label}`}>
             {(["marked", "unmarked", "unknown"] as const).map((v) => (
               <button
@@ -256,27 +384,54 @@ function DogCard({
   );
 }
 
-function Replay({ state }: { state: WalkState }) {
-  const media = state.media?.chunks ?? [];
-  const chunks = state.chunks
-    .map((c) => {
-      const m = media.find((x) => x.idx === c.idx);
-      return m?.video && m.sam ? { idx: c.idx, startS: c.start_s, video: m.video, sam: m.sam } : null;
-    })
-    .filter((c): c is NonNullable<typeof c> => c != null);
-  if (!chunks.length) return null;
-  const dogs = state.dogs.map((d) => ({
-    label: d.label,
-    status: effectiveStatus(d),
-    segments: d.segments ?? [],
-  }));
+const STAGE_ORDER = ["Track every dog", "Find people to blur", "Find the ears", "Read every mark", "Check for repeats", "Write the report"];
+const MODEL_NAME: Record<string, string> = { "sam-3.1": "SAM 3.1", "muse-spark-1.3": "Muse Spark", "muse-wonder-1.0": "Muse Wonder" };
+
+function UsagePanel({ usage, walk }: { usage: UsageRow[]; walk: WalkState["walk"] }) {
+  if (!usage.length) return null;
+  const rows = [...usage].sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
+  const total = rows.reduce((n, r) => n + r.cost_usd, 0);
+  const amount = (r: UsageRow) =>
+    r.unit === "frames" ? `${r.units.toLocaleString("en-US")} frames` : r.unit === "images" ? plural(r.units, "close-up") : `${plural(r.calls, "call")}, ${r.units.toLocaleString("en-US")} tokens`;
   return (
-    <section className="mt-16">
-      <h2 className="text-xl font-semibold tracking-[-0.01em]">The walk, as SAM 3.1 tracked it</h2>
-      <p className="mt-1 text-ink-2">Each dog keeps its number from the first frame it appears to the last.</p>
-      <div className="mt-5">
-        <WalkReplay chunks={chunks} dogs={dogs} />
+    <section className="mt-16" aria-labelledby="made">
+      <h2 id="made" className="text-xl font-semibold tracking-[-0.01em]">
+        How this survey was made
+      </h2>
+      <p className="mt-1 text-ink-2">
+        Every step, the Meta model that did it, and what it cost. {walk.proc_fps ? `The video was tracked at ${walk.proc_fps} frames a second.` : ""}
+      </p>
+      <div className="panel mt-5 overflow-x-auto">
+        <table className="num w-full min-w-[560px] text-left text-[0.9375rem]">
+          <thead className="text-[0.8125rem] text-ink-3">
+            <tr>
+              <th className="px-5 py-3 font-medium md:px-7">Step</th>
+              <th className="px-3 py-3 font-medium">Model</th>
+              <th className="px-3 py-3 font-medium">Work</th>
+              <th className="px-3 py-3 text-right font-medium">Time</th>
+              <th className="px-5 py-3 text-right font-medium md:px-7">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.stage} className="border-t border-line">
+                <td className="px-5 py-3 font-medium md:px-7">{r.stage}</td>
+                <td className="px-3 py-3 text-ink-2">{MODEL_NAME[r.model] ?? r.model}</td>
+                <td className="px-3 py-3 text-ink-2">{amount(r)}</td>
+                <td className="px-3 py-3 text-right text-ink-2">{r.seconds != null ? `${Math.round(r.seconds)} s` : "–"}</td>
+                <td className="px-5 py-3 text-right md:px-7">${r.cost_usd.toFixed(3)}</td>
+              </tr>
+            ))}
+            <tr className="border-t border-line-strong">
+              <td className="px-5 py-3 font-semibold md:px-7" colSpan={4}>
+                Total
+              </td>
+              <td className="px-5 py-3 text-right font-semibold md:px-7">${total.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+      <p className="mt-3 text-[0.875rem] text-ink-3">Stages ran in parallel where they could, so the walk took less time than the sum. SAM 3.1 looked for people only to blur them.</p>
     </section>
   );
 }
@@ -284,12 +439,32 @@ function Replay({ state }: { state: WalkState }) {
 export function Results({ state, onChange }: { state: WalkState; onChange: (s: WalkState) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "unknown">("all");
+  const [selected, setSelected] = useState<number | null>(null);
+  // On a sample survey anyone can try the review; their calls stay in this browser.
+  const [local, setLocal] = useState<Record<string, string>>({});
+  const replayRef = useRef<ReplayHandle | null>(null);
   const target = state.walk.target_mark;
+  const markTypes = state.walk.mark_types ?? [];
   const crops = state.media?.crops ?? {};
-  const unknown = state.dogs.filter((d) => effectiveStatus(d) === "unknown");
-  const shown = filter === "unknown" ? unknown : state.dogs;
+  const ears = state.media?.ears ?? {};
+
+  const dogs = useMemo(() => state.dogs.map((d) => (local[d.id] ? { ...d, review_status: local[d.id] } : d)), [state.dogs, local]);
+  const stats = useMemo(
+    () => (Object.keys(local).length ? (walkStats(dogs, target) as WalkStats) : state.walk.stats),
+    [dogs, local, target, state.walk.stats],
+  );
+  const labelOf = useMemo(() => new Map(state.dogs.map((d) => [d.id, d.label])), [state.dogs]);
+  const repeatFor = useMemo(() => new Map((state.repeats ?? []).map((r) => [r.dog_b, r])), [state.repeats]);
+  const unknown = dogs.filter((d) => effectiveStatus(d) === "unknown");
+  const shown = filter === "unknown" ? unknown : dogs;
+  const canReview = state.owner || state.walk.mode === "check" || Boolean(state.repeats?.length);
+  const tried = Object.keys(local).length > 0;
 
   async function review(dogId: string, status: string) {
+    if (!state.owner) {
+      setLocal((l) => ({ ...l, [dogId]: status }));
+      return;
+    }
     setBusy(dogId);
     try {
       const next = await api<WalkState>(`/api/walks/${state.walk.id}/dogs/${dogId}`, { method: "PATCH", json: { status } });
@@ -299,40 +474,76 @@ export function Results({ state, onChange }: { state: WalkState; onChange: (s: W
     }
   }
 
+  function show(label: number) {
+    setSelected(label);
+    const d = state.dogs.find((x) => x.label === label);
+    if (d) replayRef.current?.seek(d.first_s);
+    document.getElementById("survey-video")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <>
-      <Verdict state={state} />
-      {state.owner && unknown.length > 0 && (
-        <div className="mt-6 flex flex-col gap-3 rounded-[18px] bg-surface px-6 py-5 shadow-[inset_0_0_0_1px_var(--line-strong)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-8 grid grid-cols-12 gap-y-8 lg:gap-x-8">
+        <div id="survey-video" className="order-2 col-span-12 scroll-mt-24 lg:order-1 lg:col-span-8">
+          <SurveyPlayer state={state} dogs={dogs} selected={selected} onSelect={setSelected} replayRef={replayRef} />
+        </div>
+        <aside className="order-1 col-span-12 lg:order-2 lg:col-span-4">
+          <div className="lg:sticky lg:top-24">{stats && <Verdict walk={state.walk} st={stats} dogs={dogs} />}</div>
+        </aside>
+      </div>
+
+      {unknown.length > 0 && state.walk.mode === "check" && (
+        <div className="mt-10 flex flex-col gap-3 rounded-[18px] bg-surface px-6 py-5 shadow-[inset_0_0_0_1px_var(--line-strong)] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            <span className="font-semibold">{plural(unknown.length, "dog")} need your eyes.</span>{" "}
-            <span className="text-ink-2">The model couldn’t see their marks clearly. Look at each close-up and choose.</span>
+            <span className="font-semibold">{plural(unknown.length, "dog")} need a person’s eyes.</span>{" "}
+            <span className="text-ink-2">
+              The model couldn’t see their marks clearly. Look at each close-up and its ears, then choose.
+              {!state.owner ? " This is a sample survey: try it, and your choices stay in this browser." : ""}
+            </span>
           </p>
-          <button type="button" onClick={() => setFilter(filter === "unknown" ? "all" : "unknown")} className="btn btn-secondary btn-sm">
+          <button type="button" onClick={() => setFilter(filter === "unknown" ? "all" : "unknown")} className="btn btn-secondary btn-sm shrink-0">
             {filter === "unknown" ? "Show every dog" : "Review them"}
           </button>
         </div>
       )}
-      <Replay state={state} />
-      <section className="mt-16">
+      {tried && (
+        <p className="mt-4 text-[0.9375rem] text-ink-2">
+          Your review changed the numbers above.{" "}
+          <button type="button" className="link font-medium" onClick={() => setLocal({})}>
+            Put the model’s readings back
+          </button>
+        </p>
+      )}
+
+      <section className="mt-14">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-xl font-semibold tracking-[-0.01em]">{filter === "unknown" ? "Dogs to review" : "Every dog, once"}</h2>
           <p className="num text-[0.9375rem] text-ink-3">{plural(shown.length, "dog")}</p>
         </div>
         <ul className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy={busy != null}>
-          {shown.map((d) => (
-            <DogCard
-              key={d.id}
-              d={d}
-              crop={crops[d.id]?.[0]}
-              target={target}
-              canReview={state.owner}
-              busy={busy === d.id}
-              onReview={(st) => review(d.id, st)}
-            />
-          ))}
+          {shown.map((d) => {
+            const r = repeatFor.get(d.id);
+            return (
+              <DogCard
+                key={d.id}
+                d={d}
+                crop={crops[d.id]?.[0]}
+                ears={ears[d.id] ?? []}
+                target={target}
+                markTypes={markTypes}
+                canReview={canReview}
+                busy={busy === d.id}
+                selected={selected === d.label}
+                repeatOf={r ? (labelOf.get(r.dog_a) ?? null) : null}
+                repeatReason={r?.reason ?? null}
+                onReview={(st) => review(d.id, st)}
+                onShow={() => show(d.label)}
+              />
+            );
+          })}
         </ul>
       </section>
+      <UsagePanel usage={state.usage ?? []} walk={state.walk} />
       <ReportPanel walkId={state.walk.id} owner={state.owner} />
     </>
   );
