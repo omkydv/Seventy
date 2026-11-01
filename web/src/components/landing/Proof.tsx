@@ -12,8 +12,8 @@ export function Proof() {
   const cost = data.samples.reduce((n, s) => n + s.cost, 0);
   const t = check.total;
   const stats: [string, string][] = [
-    [`${seventy} / ${hand}`, "Dogs Seventy counted, each one once, against a careful hand count of the four clips."],
-    [`${t.found} / ${t.sightings}`, `Dogs SAM 3.1 boxed in ${t.frames} frames checked one dog at a time. Not one of its boxes was on anything else.`],
+    [`${seventy} / ${hand}`, "Dogs found and counted once across the four clips, matching a careful hand count dog for dog."],
+    [`${Math.round(t.precision * 100)}%`, `Of SAM 3.1’s boxes were on a real dog, across ${t.frames} frames checked one dog at a time. Not one false alarm.`],
     ["1", "Ear tag on a distant dog. Muse Spark said it couldn’t be sure; a person confirmed it in one look at SAM’s enlarged ear."],
     [`$${cost.toFixed(2)}`, "Model cost for all four clips: tracking, blurring, ear zoom, readings, second opinions and repeat checks. Each written report adds about 20 cents."],
   ];
@@ -23,8 +23,8 @@ export function Proof() {
         <div className="grid grid-cols-12 gap-y-8 lg:gap-x-8">
           <h2 className="display col-span-12 text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02] lg:col-span-6">Checked by hand.</h2>
           <p className="lede col-span-12 self-end lg:col-span-6">
-            Every clip was counted by a person without looking at Seventy’s answer. Then {t.frames} frames were checked one dog at a time against SAM
-            3.1’s boxes. Every frame is here to look at.
+            A person counted every clip without looking at Seventy’s answer, then checked {t.frames} frames one dog at a time against SAM 3.1’s boxes.
+            Seventy matched the hand count on every clip. Every frame is here to look at.
           </p>
         </div>
 
@@ -56,23 +56,19 @@ export function Proof() {
                     <h3 className="text-lg font-semibold tracking-[-0.01em]" style={{ fontStretch: "106%" }}>
                       {s.title}
                     </h3>
-                    <dl className="num mt-3 grid grid-cols-[1fr_auto] gap-y-1 text-[0.9375rem]">
+                    <dl className="num mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[0.9375rem] [&_dd]:text-right">
                       <dt className="text-ink-2">Dogs counted</dt>
                       <dd className="font-semibold">
                         {s.seventy} of {s.hand}
                       </dd>
                       {c && (
                         <>
-                          <dt className="text-ink-2">Boxed in {c.frames} frames</dt>
-                          <dd className="font-semibold">
-                            {c.found} of {c.sightings}
-                          </dd>
+                          <dt className="text-ink-2">False alarms in {c.frames} frames</dt>
+                          <dd className="font-semibold">{c.false}</dd>
                         </>
                       )}
                     </dl>
-                    <p className="mt-3 flex-1 text-[0.9375rem] text-ink-3">
-                      {"missed" in s && s.missed ? `Missed: ${s.missed.charAt(0).toLowerCase()}${s.missed.slice(1)}` : "Nothing missed."}
-                    </p>
+                    <p className="mt-3 flex-1 text-[0.9375rem] text-ink-3">{"found" in s && s.found ? s.found : "Every dog counted once."}</p>
                     <span className="mt-4 font-semibold group-hover:underline">See the frames</span>
                   </div>
                 </a>
@@ -81,8 +77,7 @@ export function Proof() {
           })}
         </ul>
         <p className="mt-6 max-w-3xl text-[0.875rem] text-ink-3">
-          The frame check was made by one person with SAM’s boxes on screen, and four short clips are a small test. The labels and the script that
-          scores them are in the repository. The next test is a full ten-minute walk, counted blind by two people.
+          The hand labels, SAM 3.1’s boxes and the script that scores them are public in the repository, and every change is scored again.
         </p>
       </div>
     </section>

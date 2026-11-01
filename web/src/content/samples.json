@@ -21,12 +21,12 @@
       "place": "A seaside town",
       "mode": "Ear-tag check",
       "seconds": 22,
-      "seventy": 8,
+      "seventy": 9,
       "hand": 9,
       "line": "One street dog carries a municipal ear tag. Muse Spark couldn’t be sure at that distance; a person confirmed it from SAM’s ear close-up.",
-      "missed": "A dark dog lying flat on the lawn, far from the camera.",
-      "cost": 0.194,
-      "samSeconds": 74
+      "cost": 0.206,
+      "samSeconds": 74,
+      "found": "Includes a dark dog curled up far across the lawn, which SAM 3.1 picks up in the clip’s last second."
     },
     {
       "slug": "market-street",

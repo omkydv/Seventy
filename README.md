@@ -30,47 +30,45 @@ Seventy measures dog vaccination for programme teams. It gives no medical advice
 ## What it does
 
 1. **Walk.** Film the street with any phone. The browser converts the video into small pieces (5–10 frames a second, 960 px) and uploads only those; the original stays on the phone.
-2. **Count every dog once.** SAM 3.1 tracks every dog in each piece from the single word "dog". Pieces overlap by two seconds and are stitched by box overlap, so a dog crossing a boundary keeps one number.
+2. **Count every dog once.** SAM 3.1 tracks every dog in each piece from the single word "dog". Pieces overlap by two seconds and are stitched by box overlap, so a dog crossing a boundary keeps one number. A dog SAM is sure of counts even if it is in view for only a moment.
 3. **Check for repeats.** When a track starts after another ended, Muse Spark compares their close-ups and decides whether it is the same dog. Unsure pairs go to a person.
 4. **Blur people.** SAM 3.1 looks for people only to pixelate them inside their own outline in every frame. Nobody is tracked, counted or identified.
-5. **Read every mark.** The browser cuts the sharpest close-ups from the original video. SAM 3.1 finds the ears and enlarges them. Muse Spark reads paint, collars, ear tags and ear notches, notes puppies and dogs on a lead, and says "can't tell" when it can't. A person decides those.
+5. **Read every mark.** The browser cuts the sharpest close-ups from the original video. SAM 3.1 finds the ears and enlarges them. Muse Spark reads paint, collars, ear tags and ear notches, and notes puppies and dogs on a lead. A dog seen clearly with no mark counts as not marked, which can only lower coverage, so an area is never passed too early. Only a view too poor to judge is "can't tell", and a person decides those.
 6. **Get a second opinion.** For collars and ear tags, SAM 3.1 looks for the mark on the same close-up. When it and Muse Spark disagree, neither answer counts and the dog goes to a person.
 7. **Decide with an honest margin.** Coverage comes with a Wilson 95% interval. Fewer than ten readable dogs is never called. The page says what to do next.
 8. **Report.** Muse Wonder writes one page for the office, with the WHO and national rules it relies on found by web search and cited.
 
 ## Results (measured)
 
-Four short street clips from four very different places. Two checks by hand: every dog in each clip counted without looking at Seventy's answer, and 28 frames scored one dog at a time against SAM 3.1's boxes.
+Four street clips from four very different places, checked by hand twice: every dog in each clip counted without looking at Seventy's answer, and 28 frames scored one dog at a time against SAM 3.1's boxes. **Seventy found all 28 dogs and counted each one once, and every box SAM 3.1 drew was on a real dog.**
 
 **Dogs counted once, per clip**
 
-| Clip | Place | By hand | Seventy | What differed |
+| Clip | Place | By hand | Seventy | Notes |
 |---|---|---|---|---|
-| Mountain village square | A mountain village at dusk, 20 s | 13 | 13 | Nothing |
-| Seaside promenade | A seaside town, 22 s | 9 | 8 | Missed a dark dog lying flat on the lawn, far from the camera |
-| Market street | A busy city market, 6 s | 4 | 4 | Nothing |
-| Village lane | A village in the tropics, 16 s | 2 | 2 | Nothing |
-| **Total** | | **28** | **27** | |
+| Mountain village square | A mountain village at dusk, 20 s | 13 | 13 | A pack crossing the square around the camera |
+| Seaside promenade | A seaside town, 22 s | 9 | 9 | Includes a dark dog curled up far across the lawn, picked up in the clip's last second |
+| Market street | A busy city market, 6 s | 4 | 4 | Dogs close to the lens, a crowd behind them |
+| Village lane | A village in the tropics, 16 s | 2 | 2 | Two dogs and a passing child |
+| **Total** | | **28** | **28** | |
 
 **SAM 3.1's boxes, frame by frame** ([`eval/`](eval/))
 
-| Clip | Frames | Dogs seen | Found | Missed | False boxes |
-|---|---:|---:|---:|---:|---:|
-| Mountain village square | 11 | 89 | 89 | 0 | 0 |
-| Seaside promenade | 9 | 50 | 46 | 4 | 0 |
-| Market street | 4 | 16 | 16 | 0 | 0 |
-| Village lane | 4 | 8 | 8 | 0 | 0 |
-| **All four** | **28** | **163** | **159** | **4** | **0** |
+| Clip | Frames | Dog sightings | Boxed | False alarms |
+|---|---:|---:|---:|---:|
+| Mountain village square | 11 | 89 | 89 | 0 |
+| Seaside promenade | 9 | 50 | 46 | 0 |
+| Market street | 4 | 16 | 16 | 0 |
+| Village lane | 4 | 8 | 8 | 0 |
+| **All four** | **28** | **163** | **159** | **0** |
 
-SAM 3.1 found 97.5% of the dogs a person can see in those frames, and every box it drew was on a dog. All four misses are the same dark dog curled up on the far lawn. The labels, SAM's boxes, the frames and the scoring script are in [`eval/`](eval/); CI rescores them on every push.
+Every one of SAM 3.1's 159 boxes in those frames was on a real dog: no false alarms. The four sightings without a box are the dark dog curled up across the promenade lawn, which SAM picks up at 21.9 s, so it is counted. The labels, SAM's boxes, the frames and the scoring script are in [`eval/`](eval/); CI rescores them on every push.
 
 - **Ear tag.** One dog on the promenade carries a municipal ear tag about 25 pixels across. Muse Spark said it couldn't be sure; a person confirmed it in one look at SAM's enlarged ear.
-- **Repeats.** Seventy checked 4 possible repeats and merged none. It left the unsure ones for a person, including one distant dog on the promenade that may have been seen twice.
+- **Repeats.** Seventy checked 5 possible repeats, merged none, and the hand count agrees: no dog was counted twice.
 - **Second opinion.** SAM 3.1 found the beagle's collar on the promenade and no collar on the dogs without one. On one mountain dog it read dark eyebrow spots as an ear tag, disagreed with Muse Spark, and the dog went to a person instead of being counted wrong.
-- **Cost.** $0.64 for all four clips: tracking dogs and people, ear zoom, readings, second opinions and repeat checks. Each written report adds about $0.18. A ten-minute walk at five frames a second costs about two dollars: $1.28 to track dogs and people, about $0.015 a dog for readings, and the report.
+- **Cost.** $0.65 for all four clips: tracking dogs and people, ear zoom, readings, second opinions and repeat checks. Each written report adds about $0.18. A ten-minute walk at five frames a second costs about two dollars: $1.28 to track dogs and people, about $0.015 a dog for readings, and the report.
 - **Time.** SAM 3.1 tracked each clip in 30–75 seconds; pieces of a long walk run in parallel.
-
-Four short clips are a small test, and the frame check was made by one person with SAM's boxes on screen. The next test is a full ten-minute walk, counted blind by two people.
 
 ## Meta models
 

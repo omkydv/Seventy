@@ -10,6 +10,7 @@ const reading = (over: Record<string, unknown> = {}) =>
     ear_notch: { ...tri("absent"), side: null },
     ear_tag: { ...tri("absent"), color: null },
     view_quality: "good",
+    confidence: 0.8,
     ...over,
   }) as Parameters<typeof classify>[0];
 
@@ -24,8 +25,13 @@ describe("classify", () => {
     expect(classify(reading({ ear_tag: { status: "present", color: "yellow" } }), "vaccination", ["ear_tag"])).toEqual({ status: "marked", kind: "ear_tag" });
   });
 
-  it("can't call a dog whose ears are hidden in an ear-tag survey", () => {
-    expect(classify(reading({ ear_tag: { status: "not_visible", color: null } }), "vaccination", ["ear_tag"]).status).toBe("unknown");
+  it("calls a dog seen well with no tag found not marked, even when its ears aren't sharp", () => {
+    expect(classify(reading({ ear_tag: { status: "not_visible", color: null }, view_quality: "fair" }), "vaccination", ["ear_tag"]).status).toBe("unmarked");
+  });
+
+  it("can't call a dog seen too poorly to judge", () => {
+    expect(classify(reading({ ear_tag: { status: "not_visible", color: null }, view_quality: "poor" }), "vaccination", ["ear_tag"]).status).toBe("unknown");
+    expect(classify(reading({ ear_tag: { status: "not_visible", color: null }, confidence: 0.35 }), "vaccination", ["ear_tag"]).status).toBe("unknown");
   });
 
   it("treats a reading made before ear tags were asked about as can't tell", () => {

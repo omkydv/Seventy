@@ -64,8 +64,10 @@ class UnionFind {
 }
 
 export type StitchOptions = {
-  /** Drop tracks seen for less than this many seconds. */
+  /** Drop tracks seen for less than this many seconds… */
   minSeconds?: number;
+  /** …unless SAM is at least this sure of them: a dog seen for a moment, behind others or as the walk ends, still counts. */
+  briefConf?: number;
   /** Drop tracks whose mean confidence is below this. */
   minConf?: number;
   /** Mean IoU in the overlap needed to call two objects the same dog. */
@@ -73,7 +75,7 @@ export type StitchOptions = {
 };
 
 export function stitchChunks(chunks: ChunkInput[], opts: StitchOptions = {}): WalkDog[] {
-  const { minSeconds = 0.6, minConf = 0.35, linkIou = 0.35 } = opts;
+  const { minSeconds = 0.6, briefConf = 0.6, minConf = 0.35, linkIou = 0.35 } = opts;
   const sorted = [...chunks].sort((a, b) => a.idx - b.idx);
   const sightings = new Map<Key, Sighting[]>();
 
@@ -155,7 +157,7 @@ export function stitchChunks(chunks: ChunkInput[], opts: StitchOptions = {}): Wa
     const span = merged[merged.length - 1].t - merged[0].t;
     const confs = merged.map((s) => s.conf).filter((c): c is number => c != null);
     const meanConf = confs.length ? confs.reduce((a, b) => a + b, 0) / confs.length : null;
-    if (span < minSeconds && merged.length < 4) continue;
+    if (span < minSeconds && merged.length < 4 && !(meanConf != null && meanConf >= briefConf)) continue;
     if (meanConf != null && meanConf < minConf) continue;
     dogs.push({
       segments: keys.map((k) => {

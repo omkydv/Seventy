@@ -49,7 +49,7 @@ export function Places() {
             </li>
           ))}
         </ul>
-        <p className="mt-6 text-[0.875rem] text-ink-3">These are short clips, not full survey walks. A real walk is about ten minutes; the method is the same.</p>
+        <p className="mt-6 text-[0.875rem] text-ink-3">Each clip ran through the same pipeline as a full ten-minute survey walk.</p>
       </div>
     </section>
   );

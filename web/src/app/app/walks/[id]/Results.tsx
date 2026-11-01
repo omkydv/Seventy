@@ -82,14 +82,18 @@ function markLine(d: Dog, target: string, markTypes: string[]): string {
       ? `Ear notch${m.ear_notch.side && m.ear_notch.side !== "unknown" ? `, ${m.ear_notch.side} ear` : ""}`
       : m.ear_notch.status === "absent"
         ? "No ear notch"
-        : "Ears not visible";
+        : d.mark_status === "unmarked"
+          ? "No ear notch seen"
+          : "Ears not visible";
   }
   const types = (["paint", "collar", "ear_tag"] as const).filter((k) => markTypes.includes(k));
   const parts = types.map((k) => {
     const status = k === "ear_tag" ? (m.ear_tag?.status ?? "not_visible") : m[k].status;
     const color = k === "ear_tag" ? m.ear_tag?.color : k === "collar" ? m.collar.color : m.paint.color;
     if (status === "present") return `${MARK_NAMES[k].split(" or ")[0]}${color ? `, ${color}` : ""}`;
-    return status === "absent" ? `no ${NOUN[k]}` : `${NOUN[k]} not visible`;
+    if (status === "absent") return `no ${NOUN[k]}`;
+    // Seen well enough to count as not marked, though the mark's spot itself wasn't sharp.
+    return d.mark_status === "unmarked" ? `no ${NOUN[k]} seen` : `${NOUN[k]} not visible`;
   });
   const line = parts.join(", ");
   return line.charAt(0).toUpperCase() + line.slice(1);
@@ -155,7 +159,7 @@ function Verdict({ walk, st, dogs }: { walk: WalkState["walk"]; st: WalkStats; d
           </ul>
         )}
         <p className="mt-4 text-[0.875rem] leading-relaxed text-ink-3">
-          {short ? "A short clip, not a full survey walk. " : ""}More dogs live here than one walk sees; two walks of the same route give a population estimate.
+          More dogs live here than one walk sees; two walks of the same route give a population estimate.
         </p>
         <GlyphRow dogs={dogs} mode="plan" />
       </section>
@@ -179,8 +183,8 @@ function Verdict({ walk, st, dogs }: { walk: WalkState["walk"]; st: WalkStats; d
         : st.status === "below"
           ? `Vaccinate about ${plural(st.toGo, "more dog")} among those seen to reach 70%, then check again.`
           : short
-            ? "A short clip can’t settle an area. A ten-minute walk would."
-            : "Film a longer walk through the area before deciding.";
+            ? "A full ten-minute walk through the area gives Seventy enough dogs to call it."
+            : "A longer walk through the area gives Seventy enough dogs to call it.";
   // A percentage from a handful of dogs reads as a finding, so a thin walk leads with what is missing instead.
   const enough = st.status !== "insufficient";
   const mark = walk.mark_types?.length === 1 ? MARK_NAMES[walk.mark_types[0] as VaccinationMark] : null;
@@ -412,13 +416,15 @@ function UsagePanel({ usage, walk }: { usage: UsageRow[]; walk: WalkState["walk"
   // The server logs one row per call; the table shows one row per step.
   const byStage = new Map<string, UsageRow>();
   for (const u of usage) {
-    const key = `${u.stage ?? "Other"}|${u.model}`;
+    // Reports written before stages were logged carry none.
+    const stage = u.stage ?? (u.model.startsWith("muse-wonder") ? "Write the report" : "Other");
+    const key = `${stage}|${u.model}`;
     const prev = byStage.get(key);
     byStage.set(
       key,
       prev
         ? { ...prev, units: prev.units + u.units, calls: prev.calls + (u.calls ?? 1), seconds: u.seconds == null ? prev.seconds : (prev.seconds ?? 0) + u.seconds, cost_usd: prev.cost_usd + u.cost_usd }
-        : { ...u, stage: u.stage ?? "Other", calls: u.calls ?? 1 },
+        : { ...u, stage, calls: u.calls ?? 1 },
     );
   }
   const rows = [...byStage.values()].sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));

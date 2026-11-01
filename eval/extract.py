@@ -4,8 +4,8 @@ Usage: python eval/extract.py <footage_dir>
 
 <footage_dir> holds pexels/<video> and processed/<pexels id>/sam/c000.txt, SAM's
 saved text output for the clip. Writes eval/sam_boxes.json and one sheet per clip
-to web/public/eval/<slug>.jpg: SAM's boxes in green with their ids, dogs it
-missed in amber, boxes on things that aren't dogs in red.
+to web/public/eval/<slug>.jpg: SAM's boxes in green with their ids, dogs without a
+box on that frame in amber, boxes on things that aren't dogs in red.
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ def main() -> None:
             for m in lab["missed"]:
                 x1, y1, x2, y2 = (round(v * k) for v in m["box"])
                 cv2.rectangle(img, (x1 - 5, y1 - 5), (x2 + 5, y2 + 5), AMBER, 2)
-                label(img, "missed", x1 - 5, y1 - 5, AMBER, 0.45)
+                label(img, f"found at {m['found_at']:.1f} s" if "found_at" in m else "missed", x1 - 5, y1 - 5, AMBER, 0.45)
             label(img, f"{lab['frame'] / FPS:.1f} s", 8, 26, (40, 26, 12), 0.6)
             r, c = divmod(i, cols)
             sheet[r * (th + GAP):r * (th + GAP) + th, c * (tw + GAP):c * (tw + GAP) + tw] = img

@@ -112,6 +112,8 @@ export async function writeReport(walkId: string): Promise<{ id: string; body: R
       model: REPORT_MODEL,
       units: (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0),
       unit: "tokens",
+      calls: 1,
+      stage: "Write the report",
       cost_usd: ((usage.input_tokens ?? 0) * 4 + (usage.output_tokens ?? 0) * 20) / 1e6 + 0.0125,
     });
     return { id: row!.id, body };

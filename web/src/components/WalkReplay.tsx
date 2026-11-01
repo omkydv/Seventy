@@ -271,6 +271,8 @@ export function WalkReplay({
     const player = createMediaPlayer(canvas);
     player.loop = loop;
     player.setCustomRender((c) => {
+      // A canvas caught mid-layout can have no area for a frame; skip that frame rather than stop the player.
+      if (!(c.canvas.width > 0 && c.canvas.height > 0)) return;
       renderer.renderVideoFrame(c, { fit: "contain", devicePixelRatio: () => dprRef.current, hiddenIds: hiddenRef.current });
       blurPeople(c);
       drawLabels(c);
@@ -296,6 +298,8 @@ export function WalkReplay({
       const maxH = Math.max(240, window.innerHeight * 0.72);
       const h = Math.round(Math.min(outer.clientWidth / aspect, maxH));
       const w = Math.round(Math.min(outer.clientWidth, h * aspect));
+      // Hidden or still laying out: keep the last good size.
+      if (!(w > 0 && h > 0)) return;
       wrap.style.width = `${w}px`;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;

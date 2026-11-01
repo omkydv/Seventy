@@ -24,26 +24,35 @@ export function disagrees(r: Pick<MarkReading, "collar" | "ear_tag" | "second">,
   return (spark === "present" && !sam.found) || (spark === "absent" && sam.found);
 }
 
+/**
+ * A view clear enough to call a dog not marked when no mark is found on it. Only a poor
+ * view, or a reading Muse Spark itself rates below one in two, is too unsure to call.
+ * Counting an unseen mark as no mark can only lower coverage, so an area is never passed too early.
+ */
+export function clearView(r: Pick<MarkReading, "view_quality" | "confidence">): boolean {
+  return r.view_quality !== "poor" && !(typeof r.confidence === "number" && r.confidence < 0.5);
+}
+
 /** Map a reading to the walk's question: vaccinated (paint, collar or ear tag) or sterilized (ear notch). */
 export function classify(
-  r: Pick<MarkReading, "is_dog" | "paint" | "collar" | "ear_notch" | "ear_tag" | "view_quality" | "second">,
+  r: Pick<MarkReading, "is_dog" | "paint" | "collar" | "ear_notch" | "ear_tag" | "view_quality" | "confidence" | "second">,
   target: "vaccination" | "sterilization",
   markTypes: string[],
 ): { status: MarkStatus; kind: MarkKind } {
   if (!r.is_dog) return { status: "unknown", kind: "unknown" };
   if (target === "sterilization") {
     if (r.ear_notch.status === "present") return { status: "marked", kind: "notch" };
-    if (r.ear_notch.status === "absent" && r.view_quality !== "poor") return { status: "unmarked", kind: "none" };
+    if (clearView(r)) return { status: "unmarked", kind: "none" };
     return { status: "unknown", kind: "unknown" };
   }
   const used = (["paint", "collar", "ear_tag"] as const).filter((k) => markTypes.includes(k));
   // When the two Meta models disagree about a mark this walk counts, a person decides.
   if (used.some((k) => k !== "paint" && disagrees(r, k))) return { status: "unknown", kind: "unknown" };
-  // A reading made before ear tags were asked about can't settle an ear-tag survey.
-  const statusOf = (k: VaccinationMark) => (k === "ear_tag" ? (r.ear_tag?.status ?? "not_visible") : r[k].status);
+  const statusOf = (k: VaccinationMark) => (k === "ear_tag" ? r.ear_tag?.status : r[k].status);
   const hit = used.find((k) => statusOf(k) === "present");
   if (hit) return { status: "marked", kind: hit };
-  if (used.every((k) => statusOf(k) === "absent") && r.view_quality !== "poor") return { status: "unmarked", kind: "none" };
+  // A reading made before ear tags were asked about can't settle an ear-tag survey.
+  if (used.some((k) => statusOf(k) === undefined)) return { status: "unknown", kind: "unknown" };
+  if (clearView(r)) return { status: "unmarked", kind: "none" };
   return { status: "unknown", kind: "unknown" };
 }
-

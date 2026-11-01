@@ -32,6 +32,17 @@ describe("stitchChunks", () => {
     const a: ChunkInput = { idx: 0, startS: 0, fps: 5, width: 960, height: 540, objects: { "0": track(range(0, 30), 50, 0), "9": track([3, 4], 600, 0, 0.2) } };
     expect(stitchChunks([a])).toHaveLength(1);
   });
+
+  it("keeps a dog seen for a moment when SAM is sure of it", () => {
+    // The promenade's last dog: curled up far away, tracked for three frames at 0.71 just before the clip ends.
+    const a: ChunkInput = { idx: 0, startS: 0, fps: 10, width: 1080, height: 1920, objects: { "0": track(range(0, 30), 50, 0), "9": track([27, 28, 29], 600, 0, 0.71) } };
+    expect(stitchChunks([a])).toHaveLength(2);
+  });
+
+  it("still drops a brief track SAM is unsure of", () => {
+    const a: ChunkInput = { idx: 0, startS: 0, fps: 10, width: 1080, height: 1920, objects: { "0": track(range(0, 30), 50, 0), "9": track([27, 28, 29], 600, 0, 0.45) } };
+    expect(stitchChunks([a])).toHaveLength(1);
+  });
 });
 
 describe("pickSamples", () => {

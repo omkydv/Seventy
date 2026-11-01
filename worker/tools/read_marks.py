@@ -153,17 +153,21 @@ def read(images: list[np.ndarray], ears: list[np.ndarray] | None = None) -> tupl
 FIELD = {"paint": "paint", "collar": "collar", "ear_tag": "ear_tag"}
 
 
+def clear_view(m: dict) -> bool:
+    """Same rule as clearView in web/src/lib/marks.ts: only a poor view or a reading below 0.5 is too unsure to call."""
+    return m["view_quality"] != "poor" and not (isinstance(m.get("confidence"), (int, float)) and m["confidence"] < 0.5)
+
+
 def classify(m: dict, target: str, kinds: list[str]) -> str:
     """Same rules as web/src/lib/marks.ts."""
     if not m["is_dog"]:
         return "unknown"
     if target == "sterilization":
-        s = m["ear_notch"]["status"]
-        return "marked" if s == "present" else "unmarked" if s == "absent" and m["view_quality"] != "poor" else "unknown"
+        return "marked" if m["ear_notch"]["status"] == "present" else "unmarked" if clear_view(m) else "unknown"
     used = [FIELD[k] for k in kinds if k in FIELD]
     if any(m[f]["status"] == "present" for f in used):
         return "marked"
-    return "unmarked" if all(m[f]["status"] == "absent" for f in used) and m["view_quality"] != "poor" else "unknown"
+    return "unmarked" if clear_view(m) else "unknown"
 
 
 def main() -> None:

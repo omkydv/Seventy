@@ -1,5 +1,5 @@
 {
-  "note": "Hand labels for SAM 3.1's dog tracks on the four sample clips, made on Nov 1, 2026. Frames are numbered at 10 frames a second, the rate the tracker ran at, so frame 130 is 13.0 s into the clip. Each frame was looked at full size with SAM's boxes drawn on it, and every place where a dog might be was enlarged before it was scored. `dogs` lists the SAM boxes that sit on a real dog. `missed` lists dogs a person can see that have no box, with a pixel box in the original video. `false` lists SAM boxes that sit on something that isn't a dog.",
+  "note": "Hand labels for SAM 3.1's dog tracks on the four sample clips, made on Nov 1, 2026. Frames are numbered at 10 frames a second, the rate the tracker ran at, so frame 130 is 13.0 s into the clip. Each frame was looked at full size with SAM's boxes drawn on it, and every place where a dog might be was enlarged before it was scored. `dogs` lists the SAM boxes that sit on a real dog. `missed` lists dogs a person can see that have no box on that frame, with a pixel box in the original video and, when SAM finds the dog later in the clip, the time it does. `false` lists SAM boxes that sit on something that isn't a dog.",
   "clips": [
     {
       "slug": "mountain-village",
@@ -46,25 +46,25 @@
         {
           "frame": 140,
           "dogs": ["0", "1", "2", "4", "5", "6"],
-          "missed": [{ "box": [736, 682, 780, 704], "note": "A dark dog curled up on the far lawn, beside dog 6." }],
+          "missed": [{ "box": [736, 682, 780, 704], "found_at": 21.9, "note": "A dark dog curled up on the far lawn, beside dog 6. SAM 3.1 picks it up at 21.9 s, as track 9, and it is counted." }],
           "false": []
         },
         {
           "frame": 160,
           "dogs": ["0", "1", "2", "4", "5", "6"],
-          "missed": [{ "box": [614, 688, 660, 712], "note": "The same curled-up dark dog." }],
+          "missed": [{ "box": [614, 688, 660, 712], "found_at": 21.9, "note": "The same curled-up dark dog." }],
           "false": []
         },
         {
           "frame": 190,
           "dogs": ["0", "1", "2", "4", "5", "6", "8"],
-          "missed": [{ "box": [490, 736, 525, 758], "note": "The same curled-up dark dog, between dogs 6 and 8." }],
+          "missed": [{ "box": [490, 736, 525, 758], "found_at": 21.9, "note": "The same curled-up dark dog, between dogs 6 and 8." }],
           "false": []
         },
         {
           "frame": 215,
           "dogs": ["0", "1", "2", "4", "5", "6", "8"],
-          "missed": [{ "box": [602, 762, 632, 790], "note": "The same curled-up dark dog, in front of dog 8." }],
+          "missed": [{ "box": [602, 762, 632, 790], "found_at": 21.9, "note": "The same curled-up dark dog, in front of dog 8." }],
           "false": [],
           "checked": "Box 6 is a sliver: the brown dog is almost hidden behind dog 8, as the frames before it show."
         }
