@@ -18,6 +18,7 @@
   --mark-strong: #0b8a4c;
   --mark-soft: #d6f2e3;
   --amber: #c47a06;
+  --rabies: #b42318;
   --amber-soft: #fbeccf;
   --sky: #cfe2f1;
   --focus: #2f6fed;
@@ -58,6 +59,7 @@
   --color-mark-strong: var(--mark-strong);
   --color-mark-soft: var(--mark-soft);
   --color-amber: var(--amber);
+  --color-rabies: var(--rabies);
   --color-amber-soft: var(--amber-soft);
   --color-sky: var(--sky);
   --color-on-ink: var(--on-ink);
@@ -275,5 +277,33 @@
   .replay-frame {
     aspect-ratio: var(--ar);
     width: min(100%, calc(max(240px, var(--max-h)) * var(--ar)));
+  }
+}
+
+/* The hero's underline, drawn once as if by hand: two strokes, the second a beat behind. */
+.hand-underline path {
+  fill: none;
+  stroke: var(--mark);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: hand-draw 900ms var(--ease-out-quint) 550ms forwards;
+}
+.hand-underline path + path {
+  stroke-width: 4;
+  opacity: 0.65;
+  animation-delay: 1050ms;
+  animation-duration: 650ms;
+}
+@keyframes hand-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hand-underline path {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }

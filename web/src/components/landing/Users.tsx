@@ -12,7 +12,7 @@ const teams = [
   {
     who: "Dog sterilization programmes",
     asks: "What share of the dogs here is sterilized?",
-    gets: "The same walk read for the ear notch that sterilized dogs carry, with every unclear ear sent to a person.",
+    gets: "The same walk read for the ear notch that sterilized dogs carry, with unclear ears left out, never guessed.",
     sample: { href: "/#how", label: "See how ears are read" },
     art: Array.from({ length: 10 }, (_, i) => (i < 5 ? "marked" : "unmarked")) as ("marked" | "unmarked")[],
   },

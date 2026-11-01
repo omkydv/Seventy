@@ -41,10 +41,12 @@ const sources: [string, string][] = [
   ["United Against Rabies: dog population estimation methods (2026)", "https://unitedagainstrabies.org/app/uploads/2026/04/2026_UAR_DogPopulationEstimationMethodologies_V2_Apr2026_EN.pdf"],
 ];
 
-const photos: [string, string][] = [
-  ["Village lane at dawn", "Mirza Zubair"],
-  ["Dogs beside a car park", "Jafetbyrne Photos"],
-  ["Fields under a morning sky", "Xeon jr."],
+const photos: [string, string, string, string][] = [
+  ["Street dog on a wet road", "Argho Basak", "Pexels", "https://www.pexels.com/photo/39719569/"],
+  ["Mother dog with her puppies", "Soumyadip Adak", "Pexels", "https://www.pexels.com/photo/14930773/"],
+  ["Two dogs on a rooftop at dusk", "Joydeb Biswas", "Pexels", "https://www.pexels.com/photo/38511009/"],
+  ["Village lane at dawn", "Mirza Zubair", "Unsplash", "https://unsplash.com/photos/mio7n5ofNEc"],
+  ["Fields under a morning sky", "Xeon jr.", "Unsplash", "https://unsplash.com/photos/iCNl5DzA1Hc"],
 ];
 
 export function Footer() {
@@ -73,11 +75,11 @@ export function Footer() {
         <div className="col-span-12 md:col-span-3">
           <p className="mb-3 font-semibold text-ink">Photographs</p>
           <ul className="space-y-2 text-ink-3">
-            {photos.map(([what, who]) => (
+            {photos.map(([what, who, site, href]) => (
               <li key={what}>
                 {what}, by {who} on{" "}
-                <a href="https://unsplash.com" className="link" target="_blank" rel="noreferrer">
-                  Unsplash
+                <a href={href} className="link" target="_blank" rel="noreferrer">
+                  {site}
                 </a>
               </li>
             ))}

@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import samples from "@/content/samples.json";
+
+const sampleWalks = new Set(samples.samples.map((s) => `/app/walks/${s.walk}`));
 
 const items = [
-  { href: "/app", label: "Surveys", match: (p: string) => p === "/app" || p.startsWith("/app/walks") },
-  { href: "/app/demo", label: "Sample survey", match: () => false },
+  { href: "/app", label: "Surveys", match: (p: string) => p === "/app" || (p.startsWith("/app/walks") && !sampleWalks.has(p)) },
+  { href: "/app/demo", label: "Sample survey", match: (p: string) => p === "/app/demo" || sampleWalks.has(p) },
 ];
 
 export function AppNav() {

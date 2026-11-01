@@ -1,0 +1,21 @@
+{
+  "note": "The market street sample survey, served from public/m/ (scripts/export-samples.ts). Dog labels and tracks as stored for that survey.",
+  "walk": "d6c5b703-c632-43ba-b7dd-85fe07ad85e4",
+  "width": 960,
+  "height": 540,
+  "chunks": [
+    {
+      "idx": 0,
+      "startS": 0,
+      "video": "/m/d6c5b703-c632-43ba-b7dd-85fe07ad85e4/chunks/000.mp4",
+      "sam": "/m/d6c5b703-c632-43ba-b7dd-85fe07ad85e4/sam/000.txt",
+      "people": "/m/d6c5b703-c632-43ba-b7dd-85fe07ad85e4/sam/000.people.txt"
+    }
+  ],
+  "dogs": [
+    { "label": 1, "segments": [{ "chunk": 0, "objectId": "0" }] },
+    { "label": 2, "segments": [{ "chunk": 0, "objectId": "1" }] },
+    { "label": 3, "segments": [{ "chunk": 0, "objectId": "2" }] },
+    { "label": 4, "segments": [{ "chunk": 0, "objectId": "3" }] }
+  ]
+}

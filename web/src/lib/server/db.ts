@@ -23,6 +23,16 @@ export async function signedReadUrl(path: string, seconds = 60 * 60 * 6): Promis
   return data.signedUrl;
 }
 
+/** Sign many paths in one request; a path that can't be signed comes back null. */
+export async function signedReadUrls(paths: string[], seconds = 60 * 60 * 6): Promise<Map<string, string | null>> {
+  const out = new Map<string, string | null>(paths.map((p) => [p, null]));
+  if (!paths.length) return out;
+  const { data, error } = await db().storage.from(BUCKET).createSignedUrls(paths, seconds);
+  if (error || !data) throw new Error(`Could not sign ${paths.length} paths: ${error?.message}`);
+  for (const r of data) if (r.path && r.signedUrl && !r.error) out.set(r.path, r.signedUrl);
+  return out;
+}
+
 export async function signedUploadUrl(path: string): Promise<{ path: string; token: string; signedUrl: string }> {
   const { data, error } = await db().storage.from(BUCKET).createSignedUploadUrl(path, { upsert: true });
   if (error || !data) throw new Error(`Could not create upload URL for ${path}: ${error?.message}`);

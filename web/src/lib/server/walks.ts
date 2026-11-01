@@ -2,7 +2,8 @@ import "server-only";
 
 import { walkStats, type StatDog } from "@/lib/stats";
 import { pickSamples, stitchChunks, type ChunkInput } from "@/lib/tracks";
-import { db, getBytes, getText, putText, signedReadUrl, signedUploadUrl } from "./db";
+import { db, getBytes, getText, putText, signedReadUrl, signedReadUrls, signedUploadUrl } from "./db";
+import { isSample } from "./samples";
 import { classify, MARK_MODEL, readMarks, sparkCost, type MarkReading } from "./marks";
 import { earZoom, lookFor } from "./ears";
 import { SECOND_OPINION } from "@/lib/marks";
@@ -416,30 +417,28 @@ export async function state(walkId: string) {
   return { walk, chunks: chunks ?? [], dogs: dogs ?? [], usage: usage ?? [], repeats: matches ?? [] };
 }
 
-/** Short-lived URLs the browser needs to show a walk: chunk videos, SAM text, dog crops. */
-export async function mediaUrls(walkId: string) {
-  const { chunks, dogs } = await state(walkId);
-  const chunkMedia = await Promise.all(
-    chunks.map(async (c) => {
-      const pad = String(c.idx).padStart(3, "0");
-      const video = await signedReadUrl(`${walkId}/chunks/${pad}.mp4`, 3600).catch(() => null);
-      const sam = c.status === "done" ? await signedReadUrl(`${walkId}/sam/${pad}.txt`, 3600).catch(() => null) : null;
-      const people = c.people_path ? await signedReadUrl(c.people_path as string, 3600).catch(() => null) : null;
-      return { idx: c.idx, video, sam, people };
-    }),
-  );
+/**
+ * URLs the browser needs to show a walk: chunk videos, SAM text, dog crops. Sample surveys
+ * point at their copies on the site's CDN; any other walk gets short-lived links, signed in one request.
+ */
+export async function mediaUrls(walkId: string, s?: Awaited<ReturnType<typeof state>>) {
+  const { chunks, dogs } = s ?? (await state(walkId));
+  const want = chunks.map((c) => {
+    const pad = String(c.idx).padStart(3, "0");
+    return { idx: c.idx, video: `${walkId}/chunks/${pad}.mp4`, sam: c.status === "done" ? `${walkId}/sam/${pad}.txt` : null, people: (c.people_path as string) || null };
+  });
+  const dogPaths = dogs.map((d) => {
+    const all = (d.crops ?? []) as { path: string; kind?: string }[];
+    return { id: d.id as string, body: all.filter((c) => c.kind !== "ear").slice(0, 3).map((c) => c.path), ear: all.filter((c) => c.kind === "ear").slice(0, 2).map((c) => c.path) };
+  });
+  const paths = [...want.flatMap((c) => [c.video, c.sam, c.people]), ...dogPaths.flatMap((d) => [...d.body, ...d.ear])].filter((p): p is string => !!p);
+  const urls = isSample(walkId) ? new Map(paths.map((p) => [p, `/m/${p}`])) : await signedReadUrls(paths, 3600);
+  const url = (p: string | null) => (p ? (urls.get(p) ?? null) : null);
   const crops: Record<string, string[]> = {};
   const ears: Record<string, string[]> = {};
-  await Promise.all(
-    dogs.map(async (d) => {
-      const all = (d.crops ?? []) as { path: string; kind?: string }[];
-      const body = all.filter((c) => c.kind !== "ear").slice(0, 3);
-      const ear = all.filter((c) => c.kind === "ear").slice(0, 2);
-      [crops[d.id], ears[d.id]] = await Promise.all([
-        Promise.all(body.map((c) => signedReadUrl(c.path, 3600))),
-        Promise.all(ear.map((c) => signedReadUrl(c.path, 3600))),
-      ]);
-    }),
-  );
-  return { chunks: chunkMedia, crops, ears };
+  for (const d of dogPaths) {
+    crops[d.id] = d.body.map(url).filter((u): u is string => !!u);
+    ears[d.id] = d.ear.map(url).filter((u): u is string => !!u);
+  }
+  return { chunks: want.map((c) => ({ idx: c.idx, video: url(c.video), sam: url(c.sam), people: url(c.people) })), crops, ears };
 }

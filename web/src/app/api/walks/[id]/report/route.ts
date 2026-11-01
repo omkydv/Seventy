@@ -1,5 +1,6 @@
 import { canReadWalk, ownsWalk, workspaceFrom } from "@/lib/server/auth";
-import { fail, handle, json } from "@/lib/server/http";
+import { fail, handle, json, jsonShared } from "@/lib/server/http";
+import { isSample } from "@/lib/server/samples";
 import { latestReport, writeReport } from "@/lib/server/report";
 
 export const runtime = "nodejs";
@@ -7,6 +8,7 @@ export const maxDuration = 180;
 
 export const GET = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
   const { id } = await ctx.params;
+  if (isSample(id)) return jsonShared({ report: await latestReport(id) });
   const ws = await workspaceFrom(req);
   if (!(await canReadWalk(id, ws))) return fail("That walk doesn’t exist, or it belongs to another workspace.", 404);
   return json({ report: await latestReport(id) });

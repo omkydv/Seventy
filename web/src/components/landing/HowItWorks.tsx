@@ -3,15 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CoverageMeter } from "@/components/CoverageMeter";
 import { DogGlyph } from "@/components/DogGlyph";
-import { PhotoCropClient } from "@/components/PhotoCropClient";
+import Image from "next/image";
 import { SamPhoto } from "@/components/SamPhoto";
 import report from "@/content/report-sample.json";
-import type { Box, Outline } from "@/lib/sam/protocol";
+import { MarketReplay } from "./MarketReplay";
 
 export type HowData = {
-  lane: { width: number; height: number; ear: Outline[]; earRegion: Box };
-  parking: { width: number; height: number; dogs: Outline[] };
-  reading: { reason: string; paint: string; ear: string; seconds: number };
   example: { p: number; low: number; high: number; marked: number; unmarked: number };
 };
 
@@ -45,53 +42,43 @@ function WalkVisual() {
   );
 }
 
-function CountVisual({ data }: { data: HowData["parking"] }) {
+/** A real mark, read: the promenade dog with a municipal ear tag, and the ear SAM 3.1 found and enlarged. */
+function EarTagVisual() {
   return (
-    <SamPhoto
-      src="/photos/dogs-parking.jpg"
-      alt="Four dogs resting on a verge beside a car park, each outlined by SAM 3.1."
-      width={data.width}
-      height={data.height}
-      outlines={data.dogs}
-      marks={data.dogs.map((d, i) => ({ id: d.id, color: "#ffffff", label: `Dog ${i + 1}` }))}
-      focus={{ x: 0.5, y: 0.66 }}
-      sizes="(min-width: 1024px) 55vw, 100vw"
-      drawOnView
-      delay={100}
-      className="absolute inset-0"
-    />
-  );
-}
-
-function ReadVisual({ data, reading }: { data: HowData["lane"]; reading: HowData["reading"] }) {
-  return (
-    <div className="absolute inset-0 grid grid-rows-[1fr_auto] bg-[#14202c]">
-      <PhotoCropClient
-        src="/photos/lane-dawn-dog.jpg"
-        alt="Close-up of the dog’s ear, outlined by SAM 3.1."
-        width={data.width}
-        height={data.height}
-        region={data.earRegion}
-        outlines={data.ear}
-        color="#2fd47f"
-        className="h-full w-full"
-      />
+    <div className="grid grid-rows-[auto_auto] bg-[#14202c] lg:absolute lg:inset-0 lg:grid-rows-[1fr_auto]">
+      <div className="relative aspect-[4/3] overflow-hidden lg:aspect-auto">
+        <Image
+          src="/photos/promenade-ear-tag-dog.jpg"
+          alt="A cream street dog on a seaside promenade, a small yellow tag in its ear."
+          fill
+          sizes="(min-width: 1024px) 55vw, 100vw"
+          className="object-cover object-[60%_30%]"
+        />
+        {/* Where the ear is, and what SAM 3.1 made of it. */}
+        <span aria-hidden className="absolute left-[67.5%] top-[28%] size-14 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white shadow-[0_0_0_4px_rgb(8_18_28/0.35)]" />
+        <figure className="absolute left-4 top-4 w-[30%] max-w-[11rem] overflow-hidden rounded-[16px] bg-white shadow-[0_12px_32px_-12px_rgb(8_18_28/0.7)]">
+          <div className="relative aspect-[320/497]">
+            <Image src="/m/887a06c9-3011-48c2-83ea-8ed9214ec3fe/crops/4-ear1.jpg" alt="The dog’s ear, enlarged, with the yellow tag." fill sizes="13rem" className="object-cover" />
+          </div>
+          <figcaption className="px-3 py-2 text-[0.75rem] font-semibold text-[#0c1a28]">Enlarged by SAM 3.1</figcaption>
+        </figure>
+      </div>
       <div className="bg-white p-5 text-[#0c1a28]">
         <div className="grid grid-cols-3 gap-3 text-[0.9375rem]">
           <div>
-            <p className="text-[#6e7f91]">Ear notch</p>
-            <p className="font-semibold">{reading.ear}</p>
+            <p className="text-[#6e7f91]">Mark</p>
+            <p className="font-semibold">Ear tag, yellow</p>
           </div>
           <div>
-            <p className="text-[#6e7f91]">Paint mark</p>
-            <p className="font-semibold">{reading.paint}</p>
+            <p className="text-[#6e7f91]">In the frame</p>
+            <p className="font-semibold">About 25 px</p>
           </div>
           <div>
-            <p className="text-[#6e7f91]">Read in</p>
-            <p className="font-semibold">{reading.seconds.toFixed(1)} s</p>
+            <p className="text-[#6e7f91]">Dog 4</p>
+            <p className="font-semibold text-mark-strong">Vaccinated</p>
           </div>
         </div>
-        <p className="mt-3 text-[0.875rem] text-[#3d4f63]">{reading.reason}</p>
+        <p className="mt-3 text-[0.875rem] text-[#3d4f63]">A municipal ear tag on a dog far down a seaside promenade, too small to read until SAM 3.1 enlarged the ear.</p>
       </div>
     </div>
   );
@@ -162,14 +149,15 @@ export function HowItWorks({ data }: { data: HowData }) {
     {
       title: "Count every dog once",
       body: "SAM 3.1 follows each dog through the video from the single word “dog”. When a dog leaves the frame and comes back, Muse Spark checks it against the dogs already counted, so nothing is counted twice.",
-      meta: `${data.parking.dogs.length} dogs found in this photograph by SAM 3.1.`,
-      visual: <CountVisual data={data.parking} />,
+      meta: "A city market walk, played back from SAM 3.1’s output: four dogs, and the crowd blurred.",
+      visual: <MarketReplay />,
     },
     {
       title: "Read every mark",
       body: "For each dog, Seventy cuts the sharpest close-ups from the original video. SAM 3.1 finds the ears and enlarges them, and Muse Spark reads what is there: paint, a collar, an ear tag, a sterilization notch, or that it can’t see well enough to say. For collars and ear tags, SAM 3.1 looks for the mark too, as a second opinion.",
       meta: "A dog too far or blurred to read is kept out of the coverage, never guessed.",
-      visual: <ReadVisual data={data.lane} reading={data.reading} />,
+      visual: <EarTagVisual />,
+      flow: true,
     },
     {
       title: "Decide with an honest margin",

@@ -23,7 +23,7 @@
       "seconds": 22,
       "seventy": 9,
       "hand": 9,
-      "line": "One street dog carries a municipal ear tag. Muse Spark couldn’t be sure at that distance; a person confirmed it from SAM’s ear close-up.",
+      "line": "One street dog carries a municipal ear tag, about 25 pixels across, made readable by SAM 3.1’s enlarged close-up of its ear.",
       "cost": 0.206,
       "samSeconds": 74,
       "found": "Includes a dark dog curled up far across the lawn, which SAM 3.1 picks up in the clip’s last second."
@@ -37,7 +37,7 @@
       "seconds": 6,
       "seventy": 4,
       "hand": 4,
-      "line": "Four dogs eating scraps close to the lens, with a crowd behind them. Every person is blurred.",
+      "line": "Four dogs eating scraps close to the lens, with a crowd behind them. One carries a mark at the ear, and every person is blurred.",
       "cost": 0.092,
       "samSeconds": 61
     },

@@ -137,6 +137,7 @@ export function WalkReplay({
   const pendingSeekRef = useRef<number | null>(null);
   const onTimeRef = useRef(onTime);
   const dprRef = useRef(1);
+  const openedRef = useRef(false);
   const [active, setActive] = useState(chunks[0]?.idx ?? 0);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
@@ -341,6 +342,9 @@ export function WalkReplay({
     if (!player || !renderer) return;
     setReady(false);
     setError(null);
+    // On the first piece nothing has been drawn yet, so the video can load while the tracking output does.
+    const early = openedRef.current ? null : player.open(chunk.video).then(() => null, (e: unknown) => e);
+    openedRef.current = true;
     (async () => {
       try {
         const map = new Map<string, number>();
@@ -365,7 +369,13 @@ export function WalkReplay({
         peopleRef.current = people;
         hiddenRef.current = hidden;
         await renderer.update(result, { reset: true });
-        await player.open(chunk.video);
+        if (early) {
+          const failed = await early;
+          if (failed) throw failed;
+          await player.forceRender().catch(() => {});
+        } else {
+          await player.open(chunk.video);
+        }
         if (cancelled) return;
         if (pendingSeekRef.current != null) {
           await player.seek(pendingSeekRef.current).catch(() => {});

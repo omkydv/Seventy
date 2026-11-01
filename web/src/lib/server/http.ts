@@ -8,6 +8,11 @@ export function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status, headers: { "Cache-Control": "no-store" } });
 }
 
+/** For responses every visitor sees the same way: the CDN keeps them briefly and serves stale while it refreshes. */
+export function jsonShared(data: unknown, seconds = 60) {
+  return NextResponse.json(data, { headers: { "Cache-Control": `public, s-maxage=${seconds}, stale-while-revalidate=86400` } });
+}
+
 export function fail(message: string, status = 400) {
   return json({ error: message }, status);
 }

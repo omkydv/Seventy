@@ -1,47 +1,48 @@
-const models = [
+import { DOG_PATH } from "@/components/DogGlyph";
+
+type Job = { what: string; mode: string; without: string };
+type Stage = { model: string; tone: "sam" | "spark" | "wonder"; jobs: Job[] };
+
+const stages: Stage[] = [
   {
-    name: "SAM 3.1",
-    use: "Video tracking, dogs",
-    job: "Follows every dog through the walk from the single word “dog”, keeping its number while it stays in view. This is the count.",
-    without: "Dogs get counted twice, or missed.",
+    model: "SAM 3.1",
+    tone: "sam",
+    jobs: [
+      { what: "Follows every dog through the walk from the single word “dog”. This is the count.", mode: "Video tracking", without: "Dogs counted twice, or missed" },
+      { what: "Finds every person, only to pixelate them inside their own outline.", mode: "Video tracking", without: "Footage nobody should share" },
+      { what: "Finds the ears on each close-up and enlarges them, so a small tag or notch can be read.", mode: "Image segmentation", without: "Small marks stay unreadable" },
+      { what: "Looks for the collar or ear tag itself. If it disagrees with Muse Spark, the dog is left out.", mode: "Image segmentation", without: "One model’s mistake becomes the result" },
+    ],
   },
   {
-    name: "SAM 3.1",
-    use: "Video tracking, people",
-    job: "Finds every person in every frame for one reason: to pixelate them inside their own outline before anyone sees the replay.",
-    without: "Footage of neighbours nobody should share.",
+    model: "Muse Spark",
+    tone: "spark",
+    jobs: [
+      { what: "Reads paint, collars, ear tags and notches into fixed fields, and notes puppies and dogs on a lead.", mode: "Vision, structured output", without: "Marks read differently by every reader" },
+      { what: "Decides whether a dog that came back into view is one already counted.", mode: "Vision, comparison", without: "The same dog counted twice" },
+    ],
   },
   {
-    name: "SAM 3.1",
-    use: "Image segmentation",
-    job: "Finds the ears on each close-up, so a small tag or notch can be enlarged and read.",
-    without: "Small marks stay unreadable.",
-  },
-  {
-    name: "SAM 3.1",
-    use: "Image segmentation, second opinion",
-    job: "Looks for the collar or ear tag on each close-up itself. When it and Muse Spark disagree about a dog, neither answer counts: the dog goes to a person.",
-    without: "One model’s mistake becomes the result.",
-  },
-  {
-    name: "Muse Spark",
-    use: "Vision, structured output",
-    job: "Reads paint, collars, ear tags and notches, notes puppies and dogs on a lead, says “can’t tell” when it can’t, and decides whether a dog that came back is one already counted.",
-    without: "Marks read by eye, differently by every reader.",
-  },
-  {
-    name: "Muse Wonder",
-    use: "Reasoning, web search",
-    job: "Writes the report for the office: the result, the next step, and the WHO and national rules it relies on, each cited.",
-    without: "Numbers without a decision.",
-  },
-  {
-    name: "Meta SAM client libraries",
-    use: "Parsing and drawing",
-    job: "Decode SAM’s output and draw every outline, label and blur on the video, frame by frame, in the browser.",
-    without: "No replay anyone could check.",
+    model: "Muse Wonder",
+    tone: "wonder",
+    jobs: [{ what: "Writes the report for the office, with the WHO and national rules it relies on found and cited.", mode: "Reasoning, web search", without: "Numbers without a decision" }],
   },
 ];
+
+const TONE: Record<Stage["tone"], string> = {
+  sam: "bg-[#e3edf6]",
+  spark: "bg-mark-soft",
+  wonder: "bg-[#efe9fb]",
+};
+
+/** The line from one stage down to the next. */
+function Joint() {
+  return (
+    <div aria-hidden className="flex justify-center py-1.5">
+      <span className="block h-7 w-px bg-line-strong" />
+    </div>
+  );
+}
 
 export function Evidence() {
   return (
@@ -53,40 +54,59 @@ export function Evidence() {
           </div>
           <div className="col-span-12 lg:col-span-6 lg:col-start-7">
             <p className="lede">
-              The arithmetic stays in plain code: tracks stitched across pieces of a long walk, a Wilson interval for coverage, and doses worked out from the
-              count. When a model can’t see a mark, it says so, and the dog is kept out of the coverage instead of guessed.
+              Three Meta models do the seeing, reading and writing. The arithmetic stays in plain code: tracks stitched across pieces of a long walk, a
+              Wilson interval for coverage, and doses worked out from the count.
             </p>
             <p className="mt-6 text-ink-2">
               It never follows people. SAM 3.1 looks for people only to blur them; nobody is tracked, counted or identified, and the original video stays
-              on the phone. A ten-minute walk costs about two US dollars of model time, blurring and the report included.
+              on the phone. A ten-minute walk costs about two US dollars of model time.
             </p>
           </div>
         </div>
 
-        <div className="mt-16 overflow-hidden rounded-[24px] bg-canvas">
-          <div className="hidden grid-cols-[13rem_1fr_16rem] gap-6 px-8 py-4 text-[0.875rem] font-semibold text-ink-3 md:grid">
-            <span>Model</span>
-            <span>Its job in Seventy</span>
-            <span>Without it</span>
+        <div className="mt-16">
+          <div className="flex items-center gap-5 rounded-[24px] bg-ink px-6 py-5 text-on-ink">
+            <svg viewBox="0 0 36 24" width={36} height={24} aria-hidden className="shrink-0">
+              <path d={DOG_PATH} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round" />
+            </svg>
+            <p>
+              <span className="text-lg font-semibold">A phone walk</span>
+              <span className="ml-3 text-white/70">Any phone. Sent as small pieces, five frames a second, while the original stays on the phone.</span>
+            </p>
           </div>
-          <ul>
-            {models.map((m) => (
-              <li
-                key={m.name + m.use}
-                className="grid grid-cols-1 gap-x-6 gap-y-2 border-t border-line px-6 py-6 md:grid-cols-[13rem_1fr_16rem] md:px-8"
-              >
-                <div>
-                  <p className="text-lg font-semibold tracking-[-0.01em]" style={{ fontStretch: "108%" }}>
-                    {m.name}
-                  </p>
-                  <p className="text-[0.875rem] text-ink-3">{m.use}</p>
-                </div>
-                <p className="text-ink-2">{m.job}</p>
-                <p className="text-ink-3">{m.without}</p>
-              </li>
+          <Joint />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr_1fr]">
+            {stages.map((st) => (
+              <div key={st.model} className={`flex flex-col rounded-[24px] p-5 md:p-6 ${TONE[st.tone]}`}>
+                <p className="text-xl font-semibold tracking-[-0.015em]" style={{ fontStretch: "108%" }}>
+                  {st.model}
+                </p>
+                <ul className={`mt-4 grid flex-1 gap-3 ${st.jobs.length > 2 ? "sm:grid-cols-2" : ""}`}>
+                  {st.jobs.map((j) => (
+                    <li key={j.what} className="rounded-[16px] bg-white/85 p-4">
+                      <p className="text-[0.8125rem] font-semibold text-ink-3">{j.mode}</p>
+                      <p className="mt-1 text-[0.9375rem] leading-snug">{j.what}</p>
+                      <p className="mt-2 text-[0.8125rem] text-ink-3">Without it: {j.without.charAt(0).toLowerCase() + j.without.slice(1)}.</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
+          <Joint />
+          <div className="flex items-center gap-5 rounded-[24px] bg-mark px-6 py-5 text-white">
+            <svg viewBox="0 0 36 24" width={36} height={24} aria-hidden className="shrink-0">
+              <path d={DOG_PATH} fill="currentColor" />
+            </svg>
+            <p>
+              <span className="text-lg font-semibold">A decision</span>
+              <span className="ml-3 text-white/85">Coverage with a 95% interval, the doses to bring, and the stretch of the walk to go back to.</span>
+            </p>
+          </div>
         </div>
+        <p className="mt-6 text-[0.875rem] text-ink-3">
+          Every outline, label and blur is drawn in the browser by Meta’s SAM client libraries: @meta-sam/parser, @meta-sam/graphics and @meta-sam/video.
+        </p>
       </div>
     </section>
   );
