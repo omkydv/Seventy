@@ -19,7 +19,7 @@ export function Paid() {
             [
               ["$99,000", "for one city’s AI count of its roaming dogs, from car-mounted phones"],
               ["Blank sheets", "from volunteer hand counts, even in streets known for dogs"],
-              ["About $1", "a walk for Seventy: any phone, every dog counted once, every mark read"],
+              ["About $2", "a walk for Seventy: any phone, every dog counted once, every mark read"],
             ] as const
           ).map(([n, what]) => (
             <div key={n} className="bg-ink px-7 py-8">

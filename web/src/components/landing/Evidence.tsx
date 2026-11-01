@@ -18,6 +18,12 @@ const models = [
     without: "Small marks stay unreadable.",
   },
   {
+    name: "SAM 3.1",
+    use: "Image segmentation, second opinion",
+    job: "Looks for the collar or ear tag on each close-up itself. When it and Muse Spark disagree about a dog, neither answer counts: the dog goes to a person.",
+    without: "One model’s mistake becomes the result.",
+  },
+  {
     name: "Muse Spark",
     use: "Vision, structured output",
     job: "Reads paint, collars, ear tags and notches, notes puppies and dogs on a lead, says “can’t tell” when it can’t, and decides whether a dog that came back is one already counted.",
@@ -52,7 +58,7 @@ export function Evidence() {
             </p>
             <p className="mt-6 text-ink-2">
               It never follows people. SAM 3.1 looks for people only to blur them; nobody is tracked, counted or identified, and the original video stays
-              on the phone. A ten-minute walk costs about one US dollar of model time.
+              on the phone. A ten-minute walk costs about two US dollars of model time, blurring and the report included.
             </p>
           </div>
         </div>

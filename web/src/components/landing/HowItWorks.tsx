@@ -171,8 +171,8 @@ export function HowItWorks({ data }: { data: HowData }) {
     },
     {
       title: "Read every mark",
-      body: "For each dog, Seventy cuts the sharpest close-ups from the original video. SAM 3.1 finds the ears and enlarges them, and Muse Spark reads what is there: paint, a collar, an ear tag, a sterilization notch, or that it can’t see well enough to say.",
-      meta: "When the model can’t tell, a person decides.",
+      body: "For each dog, Seventy cuts the sharpest close-ups from the original video. SAM 3.1 finds the ears and enlarges them, and Muse Spark reads what is there: paint, a collar, an ear tag, a sterilization notch, or that it can’t see well enough to say. For collars and ear tags, SAM 3.1 looks for the mark too, as a second opinion.",
+      meta: "When the models can’t tell or don’t agree, a person decides.",
       visual: <ReadVisual data={data.lane} reading={data.reading} />,
     },
     {

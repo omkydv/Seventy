@@ -1,0 +1,50 @@
+{
+  "note": "Every dog in sampled frames of the four clips, marked by hand and matched to SAM 3.1's boxes. Built by eval/score.py from eval/labels.json.",
+  "total": {
+    "frames": 28,
+    "sightings": 163,
+    "found": 159,
+    "missed": 4,
+    "false": 0,
+    "recall": 0.9755,
+    "precision": 1.0
+  },
+  "clips": [
+    {
+      "slug": "mountain-village",
+      "title": "Mountain village square",
+      "frames": 11,
+      "sightings": 89,
+      "found": 89,
+      "missed": 0,
+      "false": 0
+    },
+    {
+      "slug": "seaside-promenade",
+      "title": "Seaside promenade",
+      "frames": 9,
+      "sightings": 50,
+      "found": 46,
+      "missed": 4,
+      "false": 0
+    },
+    {
+      "slug": "market-street",
+      "title": "Market street",
+      "frames": 4,
+      "sightings": 16,
+      "found": 16,
+      "missed": 0,
+      "false": 0
+    },
+    {
+      "slug": "village-lane",
+      "title": "Village lane",
+      "frames": 4,
+      "sightings": 8,
+      "found": 8,
+      "missed": 0,
+      "false": 0
+    }
+  ]
+}

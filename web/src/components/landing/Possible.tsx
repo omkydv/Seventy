@@ -17,7 +17,7 @@ function Squares({ total, filled, size = 14, columns }: { total: number; filled:
 const rings = [
   {
     title: "One surveyor, one morning",
-    body: "A street checked in a ten-minute walk. Every dog counted once, read, and kept as evidence, for about a dollar of model time.",
+    body: "A street checked in a ten-minute walk. Every dog counted once, read, and kept as evidence, for about two dollars of model time.",
     art: <DogGlyph status="marked" size={44} />,
   },
   {

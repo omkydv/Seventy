@@ -1,0 +1,104 @@
+{
+  "note": "Hand labels for SAM 3.1's dog tracks on the four sample clips, made on Nov 1, 2026. Frames are numbered at 10 frames a second, the rate the tracker ran at, so frame 130 is 13.0 s into the clip. Each frame was looked at full size with SAM's boxes drawn on it, and every place where a dog might be was enlarged before it was scored. `dogs` lists the SAM boxes that sit on a real dog. `missed` lists dogs a person can see that have no box, with a pixel box in the original video. `false` lists SAM boxes that sit on something that isn't a dog.",
+  "clips": [
+    {
+      "slug": "mountain-village",
+      "title": "Mountain village square",
+      "pexels": 14938940,
+      "video": "14938940_1920_1080_25fps.mp4",
+      "frames": [
+        { "frame": 0, "dogs": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"], "missed": [], "false": [] },
+        { "frame": 13, "dogs": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"], "missed": [], "false": [] },
+        { "frame": 26, "dogs": ["0", "1", "2", "3", "5", "6", "7", "8", "9", "10", "11"], "missed": [], "false": [] },
+        { "frame": 39, "dogs": ["0", "1", "2", "3", "5", "6", "7", "8", "9", "11"], "missed": [], "false": [] },
+        { "frame": 52, "dogs": ["0", "1", "2", "3", "5", "6", "7", "8", "9"], "missed": [], "false": [] },
+        { "frame": 65, "dogs": ["0", "1", "2", "3", "6", "7", "9", "12"], "missed": [], "false": [] },
+        {
+          "frame": 78,
+          "dogs": ["0", "1", "2", "3", "6", "7", "9", "12"],
+          "missed": [],
+          "false": [],
+          "checked": "A dark shape on the wall looks like a lying dog at this size. Enlarged, it is a clay pot, and SAM left it alone."
+        },
+        { "frame": 91, "dogs": ["0", "2", "3", "6", "7", "9"], "missed": [], "false": [] },
+        { "frame": 104, "dogs": ["0", "2", "3", "6", "7", "12"], "missed": [], "false": [] },
+        { "frame": 117, "dogs": ["2", "3", "7", "12"], "missed": [], "false": [] },
+        { "frame": 130, "dogs": ["2", "3", "12"], "missed": [], "false": [] }
+      ]
+    },
+    {
+      "slug": "seaside-promenade",
+      "title": "Seaside promenade",
+      "pexels": 14546572,
+      "video": "14546572_1080_1920_30fps.mp4",
+      "frames": [
+        { "frame": 0, "dogs": ["0", "1", "2", "3"], "missed": [], "false": [] },
+        { "frame": 30, "dogs": ["0", "1", "2", "3"], "missed": [], "false": [] },
+        { "frame": 60, "dogs": ["0", "1", "2", "3"], "missed": [], "false": [] },
+        {
+          "frame": 90,
+          "dogs": ["0", "1", "2", "3", "4"],
+          "missed": [],
+          "false": [],
+          "checked": "Box 4 is 22 pixels wide, next to a parked van. Enlarged, it is a black and white dog walking behind the van, seen clearly five frames earlier."
+        },
+        { "frame": 120, "dogs": ["0", "1", "2"], "missed": [], "false": [] },
+        {
+          "frame": 140,
+          "dogs": ["0", "1", "2", "4", "5", "6"],
+          "missed": [{ "box": [736, 682, 780, 704], "note": "A dark dog curled up on the far lawn, beside dog 6." }],
+          "false": []
+        },
+        {
+          "frame": 160,
+          "dogs": ["0", "1", "2", "4", "5", "6"],
+          "missed": [{ "box": [614, 688, 660, 712], "note": "The same curled-up dark dog." }],
+          "false": []
+        },
+        {
+          "frame": 190,
+          "dogs": ["0", "1", "2", "4", "5", "6", "8"],
+          "missed": [{ "box": [490, 736, 525, 758], "note": "The same curled-up dark dog, between dogs 6 and 8." }],
+          "false": []
+        },
+        {
+          "frame": 215,
+          "dogs": ["0", "1", "2", "4", "5", "6", "8"],
+          "missed": [{ "box": [602, 762, 632, 790], "note": "The same curled-up dark dog, in front of dog 8." }],
+          "false": [],
+          "checked": "Box 6 is a sliver: the brown dog is almost hidden behind dog 8, as the frames before it show."
+        }
+      ]
+    },
+    {
+      "slug": "market-street",
+      "title": "Market street",
+      "pexels": 15719699,
+      "video": "15719699_1920_1080_60fps.mp4",
+      "frames": [
+        { "frame": 0, "dogs": ["0", "1", "2", "3"], "missed": [], "false": [] },
+        { "frame": 20, "dogs": ["0", "1", "2", "3"], "missed": [], "false": [] },
+        { "frame": 40, "dogs": ["0", "1", "2", "3"], "missed": [], "false": [] },
+        {
+          "frame": 60,
+          "dogs": ["0", "1", "2", "3"],
+          "missed": [],
+          "false": [],
+          "checked": "Box 2 is 12 pixels wide at the left edge. Enlarged, it is the side of dog 2 leaving the frame."
+        }
+      ]
+    },
+    {
+      "slug": "village-lane",
+      "title": "Village lane",
+      "pexels": 15322428,
+      "video": "15322428_2400_1080_30fps.mp4",
+      "frames": [
+        { "frame": 0, "dogs": ["0", "1"], "missed": [], "false": [] },
+        { "frame": 50, "dogs": ["0", "1"], "missed": [], "false": [] },
+        { "frame": 100, "dogs": ["0", "1"], "missed": [], "false": [] },
+        { "frame": 150, "dogs": ["0", "1"], "missed": [], "false": [] }
+      ]
+    }
+  ]
+}

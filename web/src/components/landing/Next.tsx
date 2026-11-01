@@ -19,7 +19,7 @@ const groups: { title: string; items: string[] }[] = [
     title: "For trust",
     items: [
       "A field trial next to a standard survey, on the same streets, published in full.",
-      "A second Meta model reading every mark, with disagreements sent to a person.",
+      "The second opinion extended from collars and ear tags to paint and ear notches.",
     ],
   },
 ];

@@ -378,7 +378,12 @@ export function WalkReplay({
 
   return (
     <div ref={outerRef}>
-      <div ref={wrapRef} className={`relative mx-auto max-w-full overflow-hidden bg-[#08121c] ${rounded}`}>
+      {/* The same size the resize effect computes, so the frame doesn't jump when the script loads. */}
+      <div
+        ref={wrapRef}
+        className={`relative mx-auto max-w-full overflow-hidden bg-[#08121c] ${rounded}`}
+        style={{ aspectRatio: aspect, width: `min(100%, calc(max(240px, 72vh) * ${aspect}))` }}
+      >
         {poster && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={poster} alt="" aria-hidden className="absolute inset-0 size-full object-cover" />

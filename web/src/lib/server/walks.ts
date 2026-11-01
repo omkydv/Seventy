@@ -62,7 +62,8 @@ export async function createWalk(ws: Workspace, input: WalkInput) {
   if (!(input.durationS > 0)) throw new UserError("That video has no length. Try exporting it again.");
   if (input.durationS > 20 * 60) throw new UserError("Walks can be up to 20 minutes. Split longer recordings.");
   const procFps = input.procFps ?? 5;
-  const estimate = samVideoCost(input.durationS * procFps * 1.05) + 0.4;
+  // Dogs and people are tracked as two jobs over the same frames (pieces overlap by 2 s in 30); readings and the report add about 60 cents.
+  const estimate = 2 * samVideoCost(input.durationS * procFps * 1.07) + 0.6;
   if (!ws.isDemo && (await spentToday(ws.id)) + estimate > env.dailyCapUsd) {
     throw new UserError("This workspace has used today’s processing allowance. Try again tomorrow, or open a sample survey.");
   }

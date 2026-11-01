@@ -1,5 +1,5 @@
 {
-  "note": "Measured on Oct 30, 2026. Hand counts were made frame by frame on the original clips. Costs are from the usage log of each sample survey.",
+  "note": "Measured on Oct 30 and 31, 2026. Hand counts were made frame by frame on the original clips. Costs are from the usage log of each sample survey and cover the whole pipeline except the written report.",
   "samples": [
     {
       "slug": "mountain-village",
@@ -11,7 +11,7 @@
       "seventy": 13,
       "hand": 13,
       "line": "A pack of 13 crossing a dirt square, every one counted once while the camera walks through them.",
-      "cost": 0.195,
+      "cost": 0.26,
       "samSeconds": 58
     },
     {
@@ -25,7 +25,7 @@
       "hand": 9,
       "line": "One street dog carries a municipal ear tag. Muse Spark couldn’t be sure at that distance; a person confirmed it from SAM’s ear close-up.",
       "missed": "A dark dog lying flat on the lawn, far from the camera.",
-      "cost": 0.174,
+      "cost": 0.194,
       "samSeconds": 74
     },
     {
@@ -38,7 +38,7 @@
       "seventy": 4,
       "hand": 4,
       "line": "Four dogs eating scraps close to the lens, with a crowd behind them. Every person is blurred.",
-      "cost": 0.072,
+      "cost": 0.092,
       "samSeconds": 61
     },
     {
@@ -51,7 +51,7 @@
       "seventy": 2,
       "hand": 2,
       "line": "A quiet lane with two dogs and a child passing. The child is blurred.",
-      "cost": 0.085,
+      "cost": 0.095,
       "samSeconds": 32
     }
   ]

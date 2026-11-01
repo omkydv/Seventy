@@ -21,3 +21,15 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Score SAM 3.1 against the hand labels
+        run: python eval/score.py
+      - name: The published numbers match the labels
+        run: git diff --exit-code eval/results.json web/src/content/eval.json

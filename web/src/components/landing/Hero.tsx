@@ -10,29 +10,31 @@ export function Hero() {
   return (
     <section className="tone-light relative overflow-hidden bg-[linear-gradient(180deg,#dbe7f1_0%,#eaf1f6_38%,#f2f6f9_100%)] text-ink">
       <LandingHeader />
-      <div className="shell pb-16 pt-8 md:pb-24 md:pt-14">
-        <div className="max-w-[58rem]">
-          <h1 className="display text-[2.75rem] sm:text-6xl xl:text-[5.5rem] xl:leading-[0.97]">Know when a street is safe from rabies.</h1>
-          <p className="lede mt-6 max-w-[38rem] text-[#24364a]">
+      <div className="shell pb-16 pt-8 md:pb-24 md:pt-10">
+        <h1 className="display max-w-[58rem] text-[2.75rem] sm:text-6xl xl:text-[5.5rem] xl:leading-[0.97]">Know when a street is safe from rabies.</h1>
+        <div className="mt-6 grid grid-cols-1 gap-y-8 lg:mt-8 lg:grid-cols-12 lg:items-start lg:gap-x-8">
+          <p className="lede max-w-[38rem] text-[#24364a] lg:col-span-6">
             Walk a street with any phone. Seventy counts every dog once, reads each vaccination mark, and tells the team whether the area has reached the
             70% that stops rabies.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/app/demo" className="btn btn-primary">
-              See a real survey
-            </Link>
-            <Link href="/app/new?sample=1" className="btn btn-light">
-              Try it with our walk
-            </Link>
+          <div className="lg:col-span-6 lg:col-start-7 lg:pt-1">
+            <div className="flex flex-wrap gap-3">
+              <Link href="/app/demo" className="btn btn-primary">
+                See a real survey
+              </Link>
+              <Link href="/app/new?sample=1" className="btn btn-light">
+                Try it with our walk
+              </Link>
+            </div>
+            <p className="mt-5 max-w-[38rem] text-[0.9375rem] leading-relaxed text-[#3d4f63]">
+              This month a US city paid about $99,000 for an AI count of its roaming dogs.{" "}
+              <a href="#paid" className="link font-medium text-[#0c1a28]">
+                Seventy does it with any phone, for about two dollars a walk.
+              </a>
+            </p>
           </div>
-          <p className="mt-6 max-w-[38rem] text-[0.9375rem] leading-relaxed text-[#3d4f63]">
-            This month a US city paid about $99,000 for an AI count of its roaming dogs.{" "}
-            <a href="#paid" className="link font-medium text-[#0c1a28]">
-              Seventy does it with any phone, for about a dollar a walk.
-            </a>
-          </p>
         </div>
-        <div className="mt-12 md:mt-16">
+        <div className="mt-10">
           <HeroReplay />
         </div>
         <p className="mt-4 max-w-[46rem] text-[0.875rem] leading-relaxed text-[#3d4f63]">
