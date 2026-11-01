@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { DogGlyph } from "@/components/DogGlyph";
 import { rememberFile } from "@/lib/client/files";
 import { rememberUploads, type UploadTicket } from "@/lib/client/uploads";
@@ -103,6 +103,31 @@ export function NewWalkForm() {
     }
   }
 
+  // A judge or a visitor without a walk video can run the real pipeline on one of ours.
+  async function loadSample() {
+    setError(null);
+    setProbing(true);
+    try {
+      const res = await fetch("/try/market-street.mp4");
+      if (!res.ok) throw new Error();
+      const f = new File([await res.blob()], "market-street-sample.mp4", { type: "video/mp4" });
+      setArea((a) => a || "Market street, sample");
+      await choose(f);
+    } catch {
+      setProbing(false);
+      setError("The sample walk couldn’t be loaded. Check the connection and try again.");
+    }
+  }
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("sample") === "1") {
+      const t = window.setTimeout(() => loadSample(), 0);
+      return () => window.clearTimeout(t);
+    }
+    // Runs once, on arrival from a "Try it with our walk" link.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!file || !probe) return setError("Choose a walk video first.");
@@ -176,6 +201,15 @@ export function NewWalkForm() {
           </span>
         </button>
         <input ref={inputRef} type="file" accept="video/*" className="sr-only" aria-label="Walk video" onChange={(e) => choose(e.target.files?.[0])} />
+        {!file && (
+          <p className="mt-4 text-[0.9375rem] text-ink-2">
+            No walk video at hand?{" "}
+            <button type="button" onClick={loadSample} disabled={probing} className="link font-semibold text-ink disabled:opacity-50">
+              Try it with our walk
+            </button>
+            : six seconds of a city market, four dogs and a crowd behind them. The full pipeline runs on it, as it would on yours.
+          </p>
+        )}
         {probe && !error && (
           <p className="num mt-4 text-[0.9375rem] text-ink-2">
             Seventy will send {frames.toLocaleString("en-US")} frames in {pieces} {pieces === 1 ? "piece" : "pieces"}, counted at the

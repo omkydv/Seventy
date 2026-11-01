@@ -10,9 +10,23 @@ export const MARK_NAMES: Record<VaccinationMark, string> = {
   ear_tag: "Ear tag",
 };
 
+/** Marks SAM 3.1 can look for by itself, and the words it is given. */
+export const SECOND_OPINION: Partial<Record<VaccinationMark, string>> = { collar: "collar", ear_tag: "ear tag" };
+
+/**
+ * Do Muse Spark and SAM 3.1 disagree about a mark? Only a clear call counts:
+ * "not visible" never disagrees, and a mark SAM wasn't asked about is left alone.
+ */
+export function disagrees(r: Pick<MarkReading, "collar" | "ear_tag" | "second">, k: "collar" | "ear_tag"): boolean {
+  const sam = r.second?.[k];
+  if (!sam) return false;
+  const spark = k === "collar" ? r.collar.status : (r.ear_tag?.status ?? "not_visible");
+  return (spark === "present" && !sam.found) || (spark === "absent" && sam.found);
+}
+
 /** Map a reading to the walk's question: vaccinated (paint, collar or ear tag) or sterilized (ear notch). */
 export function classify(
-  r: Pick<MarkReading, "is_dog" | "paint" | "collar" | "ear_notch" | "ear_tag" | "view_quality">,
+  r: Pick<MarkReading, "is_dog" | "paint" | "collar" | "ear_notch" | "ear_tag" | "view_quality" | "second">,
   target: "vaccination" | "sterilization",
   markTypes: string[],
 ): { status: MarkStatus; kind: MarkKind } {
@@ -23,6 +37,8 @@ export function classify(
     return { status: "unknown", kind: "unknown" };
   }
   const used = (["paint", "collar", "ear_tag"] as const).filter((k) => markTypes.includes(k));
+  // When the two Meta models disagree about a mark this walk counts, a person decides.
+  if (used.some((k) => k !== "paint" && disagrees(r, k))) return { status: "unknown", kind: "unknown" };
   // A reading made before ear tags were asked about can't settle an ear-tag survey.
   const statusOf = (k: VaccinationMark) => (k === "ear_tag" ? (r.ear_tag?.status ?? "not_visible") : r[k].status);
   const hit = used.find((k) => statusOf(k) === "present");

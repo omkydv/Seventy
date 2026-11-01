@@ -4,7 +4,8 @@ import { walkStats, type StatDog } from "@/lib/stats";
 import { pickSamples, stitchChunks, type ChunkInput } from "@/lib/tracks";
 import { db, getBytes, getText, putText, signedReadUrl, signedUploadUrl } from "./db";
 import { classify, MARK_MODEL, readMarks, sparkCost, type MarkReading } from "./marks";
-import { earZoom } from "./ears";
+import { earZoom, lookFor } from "./ears";
+import { SECOND_OPINION } from "@/lib/marks";
 import { checkRepeats } from "./repeats";
 import { checkJob, compactTracks, samVideoCost, submitVideoJob, type ChunkTracks } from "./sam";
 import type { Workspace } from "./auth";
@@ -315,6 +316,7 @@ async function readNextDogs(walkId: string, walk: Record<string, unknown>) {
       // SAM finds an ear on each of the two best close-ups, enlarged so a tag or notch can be read.
       const ears: { path: string; t: number; kind: "ear" }[] = [];
       const earUrls: string[] = [];
+      const earBytes: Buffer[] = [];
       for (const [k, c] of crops.slice(0, 2).entries()) {
         try {
           const zoom = await earZoom(bytes[k]);
@@ -322,6 +324,7 @@ async function readNextDogs(walkId: string, walk: Record<string, unknown>) {
           if (!zoom.ear) continue;
           const path = `${walkId}/crops/${d.id}-ear${k}.jpg`;
           earUrls.push(jpegDataUrl(zoom.ear));
+          earBytes.push(zoom.ear);
           const { error } = await db().storage.from("walks").upload(path, zoom.ear, { upsert: true, contentType: "image/jpeg" });
           if (!error) ears.push({ path, t: c.t, kind: "ear" });
         } catch {
@@ -330,6 +333,22 @@ async function readNextDogs(walkId: string, walk: Record<string, unknown>) {
       }
       try {
         const { value, usage, ms } = await readMarks(urls, earUrls);
+        // Second opinion: SAM 3.1 looks for the mark itself. If the two models disagree, a person decides.
+        const types = ((walk.mark_types as string[]) ?? []).filter((k): k is "collar" | "ear_tag" => k === "collar" || k === "ear_tag");
+        if (walk.target_mark !== "sterilization" && types.length) {
+          const second: NonNullable<MarkReading["second"]> = {};
+          for (const k of types) {
+            try {
+              const image = k === "ear_tag" && earBytes.length ? earBytes[0] : bytes[0];
+              const look = await lookFor(SECOND_OPINION[k]!, image);
+              second[k] = { found: look.found, conf: look.conf };
+              await logUsage({ workspace_id: ws, walk_id: walkId, model: "sam-3.1", units: 1, unit: "images", cost_usd: look.cost, stage: "Second opinion on marks", calls: 1, seconds: look.ms / 1000 });
+            } catch {
+              /* without a second opinion the reading stands on its own */
+            }
+          }
+          (value as MarkReading).second = second;
+        }
         const cls = classify(value, walk.target_mark as "vaccination" | "sterilization", (walk.mark_types as string[]) ?? ["paint"]);
         await db()
           .from("dogs")

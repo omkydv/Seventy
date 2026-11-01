@@ -26,55 +26,9 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --canvas: #08121c;
-    --canvas-2: #0d1a27;
-    --surface: #102030;
-    --surface-2: #0d1b29;
-    --line: #22364a;
-    --line-strong: #34506a;
-    --ink: #eaf1f7;
-    --ink-2: #b4c3d1;
-    --ink-3: #8094a7;
-    --ink-hover: #ffffff;
-    --mark: #2fd47f;
-    --mark-strong: #5ee39d;
-    --mark-soft: #0f3324;
-    --amber: #f0a93a;
-    --amber-soft: #3a2a10;
-    --sky: #17324a;
-    --focus: #79a6ff;
-    --on-ink: #08121c;
-    --shadow: 0 0 0;
-    color-scheme: dark;
-  }
-}
+/* Seventy is a light, morning-air design only. */
 
-:root[data-theme="dark"] {
-  --canvas: #08121c;
-  --canvas-2: #0d1a27;
-  --surface: #102030;
-  --surface-2: #0d1b29;
-  --line: #22364a;
-  --line-strong: #34506a;
-  --ink: #eaf1f7;
-  --ink-2: #b4c3d1;
-  --ink-3: #8094a7;
-  --ink-hover: #ffffff;
-  --mark: #2fd47f;
-  --mark-strong: #5ee39d;
-  --mark-soft: #0f3324;
-  --amber: #f0a93a;
-  --amber-soft: #3a2a10;
-  --sky: #17324a;
-  --focus: #79a6ff;
-  --on-ink: #08121c;
-  --shadow: 0 0 0;
-  color-scheme: dark;
-}
-
-/* Photographic sections keep the light palette whatever the theme. */
+/* Photographic sections pin the light palette. */
 .tone-light {
   --canvas: #f2f6f9;
   --surface: #ffffff;
@@ -311,6 +265,7 @@
     scroll-behavior: auto !important;
   }
 }
+
 
 
 

@@ -12,6 +12,8 @@ export type MarkReading = {
   ear_tag: { status: "present" | "absent" | "not_visible"; color: string | null };
   life_stage: "adult" | "puppy" | "unknown";
   lead: { status: "present" | "absent" | "not_visible" };
+  /** Added after the reading: SAM 3.1's own search for the mark. */
+  second?: Partial<Record<"collar" | "ear_tag", { found: boolean; conf: number | null }>>;
   coat: string;
   view_quality: "good" | "fair" | "poor";
   confidence: number;

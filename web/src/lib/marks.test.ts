@@ -43,3 +43,20 @@ describe("classify", () => {
     expect(classify(reading({ is_dog: false }), "sterilization", []).status).toBe("unknown");
   });
 });
+
+describe("second opinion", () => {
+  it("sends a dog to a person when SAM and Muse Spark disagree about a collar", () => {
+    const r = reading({ collar: { status: "present", color: "red" }, second: { collar: { found: false, conf: null } } });
+    expect(classify(r, "vaccination", ["collar"]).status).toBe("unknown");
+  });
+
+  it("keeps the reading when both models agree", () => {
+    const r = reading({ collar: { status: "present", color: "red" }, second: { collar: { found: true, conf: 0.6 } } });
+    expect(classify(r, "vaccination", ["collar"])).toEqual({ status: "marked", kind: "collar" });
+  });
+
+  it("ignores a second opinion on a mark the walk doesn't count", () => {
+    const r = reading({ collar: { status: "present", color: "red" }, second: { collar: { found: false, conf: null } } });
+    expect(classify(r, "vaccination", ["paint"]).status).toBe("unmarked");
+  });
+});

@@ -48,6 +48,8 @@ export type MarkReading = {
   ear_tag?: { status: string; color: string | null };
   life_stage?: "adult" | "puppy" | "unknown";
   lead?: { status: string };
+  /** SAM 3.1 looking for the mark itself, as a second opinion on Muse Spark's reading. */
+  second?: Partial<Record<"collar" | "ear_tag", { found: boolean; conf: number | null }>>;
   coat: string;
   view_quality: "good" | "fair" | "poor";
   confidence: number;

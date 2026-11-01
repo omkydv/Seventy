@@ -3,7 +3,7 @@ import "server-only";
 import sharp from "sharp";
 import { samImageCost, segmentImage } from "./sam";
 
-const BOX = /(?:^|,)(\d+)<\|box;x1=(\d+);y1=(\d+);x2=(\d+);y2=(\d+);w=(\d+);h=(\d+)(?:;c=([\d.]+))?/g;
+const BOX = /(?:^|,|f>)(\d+)<\|box;x1=(\d+);y1=(\d+);x2=(\d+);y2=(\d+);w=(\d+);h=(\d+)(?:;c=([\d.]+))?/g;
 
 /**
  * SAM 3.1 finds the dog's ears on a close-up; return the clearest one enlarged,
@@ -37,4 +37,13 @@ export async function earZoom(jpeg: Uint8Array): Promise<{ ear: Buffer | null; c
     .jpeg({ quality: 88 })
     .toBuffer();
   return { ear, cost, ms: Date.now() - started };
+}
+
+/** SAM 3.1 looks for a mark itself (a collar, an ear tag): the second opinion on Muse Spark's reading. */
+export async function lookFor(concept: string, jpeg: Uint8Array): Promise<{ found: boolean; conf: number | null; cost: number; ms: number }> {
+  const started = Date.now();
+  const text = await segmentImage(concept, `data:image/jpeg;base64,${Buffer.from(jpeg).toString("base64")}`);
+  const confs = [...text.matchAll(BOX)].map((m) => (m[8] ? Number(m[8]) : 0.5));
+  const best = confs.length ? Math.max(...confs) : null;
+  return { found: best != null && best >= 0.35, conf: best, cost: samImageCost(1), ms: Date.now() - started };
 }

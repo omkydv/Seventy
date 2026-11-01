@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 
 FRAME = re.compile(r"<(\d+)f>")
-BOX = re.compile(r"(?:^|,)(\d+)<\|box;x1=(\d+);y1=(\d+);x2=(\d+);y2=(\d+);w=(\d+);h=(\d+)")
+BOX = re.compile(r"(?:^|,|f>)(\d+)<\|box;x1=(\d+);y1=(\d+);x2=(\d+);y2=(\d+);w=(\d+);h=(\d+)")
 
 
 def boxes_by_frame(text: str) -> dict[int, list[tuple[str, float, float, float, float]]]:

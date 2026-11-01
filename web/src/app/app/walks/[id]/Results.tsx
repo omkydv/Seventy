@@ -7,7 +7,7 @@ import { DogTimeline } from "@/components/DogTimeline";
 import { WalkReplay, type ReplayHandle } from "@/components/WalkReplay";
 import { api } from "@/lib/client/workspace";
 import { clock, plural } from "@/lib/format";
-import { MARK_NAMES, type VaccinationMark } from "@/lib/marks";
+import { disagrees, MARK_NAMES, type VaccinationMark } from "@/lib/marks";
 import { TARGET, walkStats } from "@/lib/stats";
 import { effectiveStatus, type Dog, type UsageRow, type WalkState, type WalkStats } from "@/lib/types";
 import { ReportPanel } from "./ReportPanel";
@@ -93,6 +93,21 @@ function markLine(d: Dog, target: string, markTypes: string[]): string {
   });
   const line = parts.join(", ");
   return line.charAt(0).toUpperCase() + line.slice(1);
+}
+
+/** SAM 3.1's own search for the mark, in one plain line per mark it looked for. */
+function secondLines(d: Dog): { text: string; split: boolean }[] {
+  const second = d.mark?.second;
+  if (!second || !d.mark) return [];
+  return (["collar", "ear_tag"] as const)
+    .filter((k) => second[k])
+    .map((k) => {
+      const split = disagrees(d.mark!, k);
+      return {
+        split,
+        text: `SAM 3.1 also looked for ${k === "collar" ? "a collar" : "an ear tag"} and ${second[k]!.found ? "found one" : "found none"}.${split ? " The two models disagree, so a person decides." : ""}`,
+      };
+    });
 }
 
 /** Every dog on the walk, as the landing page draws them. */
@@ -337,6 +352,11 @@ function DogCard({
         )}
         <p className="mt-2 text-[0.9375rem] text-ink-2">{markLine(d, target, markTypes)}</p>
         {d.mark && !d.mark.error && !d.mark.skipped && <p className="mt-2 text-[0.9375rem] text-ink-3">{d.mark.reason}</p>}
+        {secondLines(d).map((l) => (
+          <p key={l.text} className={`mt-2 text-[0.875rem] ${l.split ? "font-medium text-ink" : "text-ink-3"}`}>
+            {l.text}
+          </p>
+        ))}
         {d.review_note && (
           <p className="mt-3 rounded-[12px] bg-mark-soft px-3 py-2 text-[0.875rem] text-ink">
             <span className="font-semibold">Checked by a person.</span> {d.review_note.replace(/\s*Checked by a person\.?$/, "")}
@@ -384,7 +404,7 @@ function DogCard({
   );
 }
 
-const STAGE_ORDER = ["Track every dog", "Find people to blur", "Find the ears", "Read every mark", "Check for repeats", "Write the report"];
+const STAGE_ORDER = ["Track every dog", "Find people to blur", "Find the ears", "Read every mark", "Second opinion on marks", "Check for repeats", "Write the report"];
 const MODEL_NAME: Record<string, string> = { "sam-3.1": "SAM 3.1", "muse-spark-1.3": "Muse Spark", "muse-wonder-1.0": "Muse Wonder" };
 
 function UsagePanel({ usage, walk }: { usage: UsageRow[]; walk: WalkState["walk"] }) {

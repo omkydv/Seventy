@@ -6,11 +6,13 @@ import { Evidence } from "@/components/landing/Evidence";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks, type HowData } from "@/components/landing/HowItWorks";
 import { Next } from "@/components/landing/Next";
+import { Paid } from "@/components/landing/Paid";
 import { Places } from "@/components/landing/Places";
 import { Possible } from "@/components/landing/Possible";
 import { Problem } from "@/components/landing/Problem";
 import { Programme } from "@/components/landing/Programme";
 import { Proof } from "@/components/landing/Proof";
+import { Users } from "@/components/landing/Users";
 import marks from "@/content/sam/lane-dawn-dog.marks.json";
 import { loadPhotoSegmentation } from "@/lib/sam/photos";
 import { chapman, coverage } from "@/lib/stats";
@@ -48,9 +50,11 @@ export default async function Home() {
         <Hero />
         <Problem />
         <Clipboard />
+        <Paid />
         <Compare />
         <HowItWorks data={data} />
         <Places />
+        <Users />
         <Programme />
         <Proof />
         <Evidence />

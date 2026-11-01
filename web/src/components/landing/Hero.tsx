@@ -21,10 +21,16 @@ export function Hero() {
             <Link href="/app/demo" className="btn btn-primary">
               See a real survey
             </Link>
-            <Link href="/app/new" className="btn btn-light">
-              Survey a walk
+            <Link href="/app/new?sample=1" className="btn btn-light">
+              Try it with our walk
             </Link>
           </div>
+          <p className="mt-6 max-w-[38rem] text-[0.9375rem] leading-relaxed text-[#3d4f63]">
+            This month a US city paid about $99,000 for an AI count of its roaming dogs.{" "}
+            <a href="#paid" className="link font-medium text-[#0c1a28]">
+              Seventy does it with any phone, for about a dollar a walk.
+            </a>
+          </p>
         </div>
         <div className="mt-12 md:mt-16">
           <HeroReplay />

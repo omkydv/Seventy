@@ -33,3 +33,4 @@ Thumbs.db
 
 # the landing page hero clip is part of the site
 !web/public/hero/*.mp4
+!web/public/try/*.mp4

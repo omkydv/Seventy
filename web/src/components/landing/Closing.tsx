@@ -20,8 +20,8 @@ export function FinalCta() {
           <Link href="/app/demo" className="btn btn-primary">
             See a real survey
           </Link>
-          <Link href="/app/new" className="btn btn-light">
-            Survey a walk
+          <Link href="/app/new?sample=1" className="btn btn-light">
+            Try it with our walk
           </Link>
         </div>
       </div>
