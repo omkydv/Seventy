@@ -13,7 +13,25 @@ type Mode = "plan" | "check";
 type Mark = "paint" | "collar" | "ear_tag" | "notch";
 
 const FPS = 5;
-const COUNTRIES = ["Bangladesh", "Brazil", "Ethiopia", "Haiti", "India", "Indonesia", "Kenya", "Malawi", "Nepal", "Nigeria", "Pakistan", "Philippines", "South Africa", "Sri Lanka", "Tanzania", "Uganda", "Vietnam"];
+const COUNTRIES = [
+  "Bangladesh",
+  "Brazil",
+  "Ethiopia",
+  "Haiti",
+  "India",
+  "Indonesia",
+  "Kenya",
+  "Malawi",
+  "Nepal",
+  "Nigeria",
+  "Pakistan",
+  "Philippines",
+  "South Africa",
+  "Sri Lanka",
+  "Tanzania",
+  "Uganda",
+  "Vietnam",
+];
 
 function Step({ n, title, children, done }: { n: number; title: string; children: React.ReactNode; done?: boolean }) {
   return (
@@ -124,7 +142,7 @@ export function NewWalkForm() {
       const t = window.setTimeout(() => loadSample(), 0);
       return () => window.clearTimeout(t);
     }
-    // Runs once, on arrival from a "Try it with our walk" link.
+    // Runs once, on arrival from a "Use our sample clip" link.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -170,50 +188,56 @@ export function NewWalkForm() {
   return (
     <form onSubmit={submit} className="mt-12 space-y-12" noValidate>
       <Step n={1} title="Choose the walk video" done={!!probe && !error}>
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="panel flex w-full items-center gap-5 p-6 text-left transition-shadow hover:shadow-[0_1px_0_rgb(var(--shadow)/0.04),0_18px_40px_-24px_rgb(var(--shadow)/0.5),inset_0_0_0_1px_var(--line-strong)]"
-        >
-          <span aria-hidden className="flex size-14 shrink-0 items-center justify-center rounded-[16px] bg-canvas-2">
-            <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="var(--ink)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="6" width="13" height="12" rx="2.5" />
-              <path d="m16 10.5 4.5-2.5v8L16 13.5" />
-            </svg>
-          </span>
-          <span className="min-w-0">
-            {file ? (
-              <>
-                <span className="block truncate text-lg font-semibold">{file.name}</span>
-                <span className="num block text-[0.9375rem] text-ink-2">
-                  {probing && "Reading the video"}
-                  {probe &&
-                    `${duration(probe.durationS)}, ${probe.width} by ${probe.height}${probe.fps ? `, ${Math.round(probe.fps)} frames a second` : ""}, ${(file.size / 1e6).toFixed(0)} MB`}
-                </span>
-                <span className="mt-1 block text-[0.875rem] font-semibold text-ink-3">Choose a different video</span>
-              </>
-            ) : (
-              <>
-                <span className="block text-lg font-semibold">Choose a walk video</span>
-                <span className="block text-[0.9375rem] text-ink-2">MP4 or MOV from a phone, up to 20 minutes.</span>
-              </>
-            )}
-          </span>
-        </button>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="panel flex h-full w-full items-center gap-5 p-6 text-left transition-shadow hover:shadow-[0_1px_0_rgb(var(--shadow)/0.04),0_18px_40px_-24px_rgb(var(--shadow)/0.5),inset_0_0_0_1px_var(--line-strong)]"
+          >
+            <span aria-hidden className="flex size-14 shrink-0 items-center justify-center rounded-[16px] bg-canvas-2">
+              <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="var(--ink)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="6" width="13" height="12" rx="2.5" />
+                <path d="m16 10.5 4.5-2.5v8L16 13.5" />
+              </svg>
+            </span>
+            <span className="min-w-0">
+              {file ? (
+                <>
+                  <span className="block truncate text-lg font-semibold">{file.name}</span>
+                  <span className="num block text-[0.9375rem] text-ink-2">
+                    {probing && "Reading the video"}
+                    {probe &&
+                      `${duration(probe.durationS)}, ${probe.width} by ${probe.height}${probe.fps ? `, ${Math.round(probe.fps)} frames a second` : ""}, ${(file.size / 1e6).toFixed(0)} MB`}
+                  </span>
+                  <span className="mt-1 block text-[0.875rem] font-semibold text-ink-3">Choose a different video</span>
+                </>
+              ) : (
+                <>
+                  <span className="block text-lg font-semibold">Upload your walk</span>
+                  <span className="block text-[0.9375rem] text-ink-2">MP4 or MOV from a phone, up to 20 minutes.</span>
+                </>
+              )}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={loadSample}
+            disabled={probing}
+            className="panel flex h-full w-full items-center gap-5 p-6 text-left transition-shadow hover:shadow-[0_1px_0_rgb(var(--shadow)/0.04),0_18px_40px_-24px_rgb(var(--shadow)/0.5),inset_0_0_0_1px_var(--line-strong)] disabled:opacity-60"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/samples/market-street.jpg" alt="" className="size-14 shrink-0 rounded-[16px] object-cover" />
+            <span className="min-w-0">
+              <span className="block text-lg font-semibold">Use our sample clip</span>
+              <span className="block text-[0.9375rem] text-ink-2">Six seconds of a city market: four dogs, a crowd behind them.</span>
+            </span>
+          </button>
+        </div>
         <input ref={inputRef} type="file" accept="video/*" className="sr-only" aria-label="Walk video" onChange={(e) => choose(e.target.files?.[0])} />
-        {!file && (
-          <p className="mt-4 text-[0.9375rem] text-ink-2">
-            No walk video at hand?{" "}
-            <button type="button" onClick={loadSample} disabled={probing} className="link font-semibold text-ink disabled:opacity-50">
-              Try it with our walk
-            </button>
-            : six seconds of a city market, four dogs and a crowd behind them. The full pipeline runs on it, as it would on yours.
-          </p>
-        )}
         {probe && !error && (
           <p className="num mt-4 text-[0.9375rem] text-ink-2">
-            Seventy will send {frames.toLocaleString("en-US")} frames in {pieces} {pieces === 1 ? "piece" : "pieces"}, counted at the
-            same time. Expect about {minutes} minutes.
+            Seventy will send {frames.toLocaleString("en-US")} frames in {pieces} {pieces === 1 ? "piece" : "pieces"}, counted at the same time. Expect about{" "}
+            {minutes} minutes.
           </p>
         )}
       </Step>
@@ -226,7 +250,9 @@ export function NewWalkForm() {
             onSelect={() => setMode("plan")}
             title="Plan a drive"
             body="Count the dogs and work out how many doses the team needs. Use it before a drive, or where none has been."
-            art={Array.from({ length: 7 }, (_, i) => <DogGlyph key={i} status="unmarked" size={24} />)}
+            art={Array.from({ length: 7 }, (_, i) => (
+              <DogGlyph key={i} status="unmarked" size={24} />
+            ))}
           />
           <Choice
             name="mode"
@@ -234,7 +260,9 @@ export function NewWalkForm() {
             onSelect={() => setMode("check")}
             title="Check a drive"
             body="Read the marks and measure coverage against the 70% line. Walk within three days, while marks are fresh."
-            art={Array.from({ length: 7 }, (_, i) => <DogGlyph key={i} status={i < 5 ? "marked" : "unmarked"} size={24} />)}
+            art={Array.from({ length: 7 }, (_, i) => (
+              <DogGlyph key={i} status={i < 5 ? "marked" : "unmarked"} size={24} />
+            ))}
           />
         </div>
         {mode === "check" && (
@@ -311,9 +339,7 @@ export function NewWalkForm() {
         <button type="submit" className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-40" disabled={!probe || !!error || busy}>
           {busy ? "Starting" : "Start counting"}
         </button>
-        <span className="text-[0.9375rem] text-ink-3">
-          {probe && !error ? "Keep this tab open while the walk uploads." : "Choose a video to begin."}
-        </span>
+        <span className="text-[0.9375rem] text-ink-3">{probe && !error ? "Keep this tab open while the walk uploads." : "Choose a video to begin."}</span>
       </div>
     </form>
   );

@@ -139,14 +139,14 @@ export function WalkList() {
             <h2 id="start" className="text-xl font-semibold tracking-[-0.01em]">
               Count your own walk
             </h2>
-            <p className="mt-1 text-ink-2">Add a phone video of a street, or run the full pipeline on our six-second market clip.</p>
+            <p className="mt-1 text-ink-2">Upload a phone video of a street, or run the full pipeline on our six-second market clip.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/app/new" className="btn btn-primary">
               New survey
             </Link>
             <Link href="/app/new?sample=1" className="btn btn-secondary">
-              Try it with our walk
+              Use our sample clip
             </Link>
           </div>
         </section>

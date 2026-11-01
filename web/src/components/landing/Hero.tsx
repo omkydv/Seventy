@@ -27,8 +27,8 @@ export function Hero() {
               <Link href="/app/demo" className="btn btn-primary">
                 See a real survey
               </Link>
-              <Link href="/app/new?sample=1" className="btn btn-light">
-                Try it with our walk
+              <Link href="/app/new" className="btn btn-light">
+                Try it now
               </Link>
             </div>
             <p className="mt-5 max-w-[34rem] text-[1rem] leading-relaxed text-[#24364a]">

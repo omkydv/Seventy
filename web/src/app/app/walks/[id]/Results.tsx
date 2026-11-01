@@ -356,8 +356,13 @@ function DogCard({
             ))}
           </p>
         )}
-        <p className="mt-2 text-[0.9375rem] text-ink-2">{markLine(d, target, markTypes)}</p>
-        {d.mark && !d.mark.error && !d.mark.skipped && <p className="mt-2 text-[0.9375rem] text-ink-3">{d.mark.reason}</p>}
+        {/* A dog settled as marked keeps its status; a reading that found no mark would only contradict it. */}
+        {!(s === "marked" && !(["paint", "collar", "ear_tag", "ear_notch"] as const).some((k) => d.mark?.[k]?.status === "present")) && (
+          <>
+            <p className="mt-2 text-[0.9375rem] text-ink-2">{markLine(d, target, markTypes)}</p>
+            {d.mark && !d.mark.error && !d.mark.skipped && <p className="mt-2 text-[0.9375rem] text-ink-3">{d.mark.reason}</p>}
+          </>
+        )}
         {secondLines(d).map((l) => (
           <p key={l.text} className={`mt-2 text-[0.875rem] ${l.split ? "font-medium text-ink" : "text-ink-3"}`}>
             {l.text}
