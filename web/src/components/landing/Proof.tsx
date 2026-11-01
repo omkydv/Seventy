@@ -1,10 +1,12 @@
 import Image from "next/image";
+import Link from "next/link";
 import check from "@/content/eval.json";
 import data from "@/content/samples.json";
 
 /**
- * Two hand checks of the sample clips: every dog counted against Seventy's count,
- * and sampled frames scored one dog at a time against SAM 3.1's boxes (eval/ in the repo).
+ * The four real walks, each with what a person found checking it by hand: every dog
+ * counted against Seventy's count, and sampled frames scored one dog at a time
+ * against SAM 3.1's boxes (eval/ in the repo).
  */
 export function Proof() {
   const hand = data.samples.reduce((n, s) => n + s.hand, 0);
@@ -12,19 +14,21 @@ export function Proof() {
   const cost = data.samples.reduce((n, s) => n + s.cost, 0);
   const t = check.total;
   const stats: [string, string][] = [
-    [`${seventy} / ${hand}`, "Dogs found and counted once across the four clips, matching a careful hand count dog for dog."],
+    [`${seventy} / ${hand}`, "Dogs found and counted once across the four walks, matching a careful hand count dog for dog."],
     [`${Math.round(t.precision * 100)}%`, `Of SAM 3.1’s boxes were on a real dog, across ${t.frames} frames checked one dog at a time. Not one false alarm.`],
-    ["1", "Ear tag on a distant dog. Muse Spark said it couldn’t be sure; a person confirmed it in one look at SAM’s enlarged ear."],
-    [`$${cost.toFixed(2)}`, "Model cost for all four clips: tracking, blurring, ear zoom, readings, second opinions and repeat checks. Each written report adds about 20 cents."],
+    ["1", "Ear tag on a distant dog, about 25 pixels across, made readable by SAM 3.1’s enlarged close-up of the ear."],
+    [`$${cost.toFixed(2)}`, "Model cost for all four walks: tracking, blurring, ear zoom, readings, second opinions and repeat checks."],
   ];
   return (
     <section id="proof" className="scroll-mt-6 bg-surface py-28 md:py-40">
       <div className="shell">
         <div className="grid grid-cols-12 gap-y-8 lg:gap-x-8">
-          <h2 className="display col-span-12 text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02] lg:col-span-6">Checked by hand.</h2>
+          <h2 className="display col-span-12 text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02] lg:col-span-6">
+            Four real walks, checked by hand.
+          </h2>
           <p className="lede col-span-12 self-end lg:col-span-6">
-            A person counted every clip without looking at Seventy’s answer, then checked {t.frames} frames one dog at a time against SAM 3.1’s boxes.
-            Seventy matched the hand count on every clip. Every frame is here to look at.
+            A mountain village, a seaside town, a city market and a village lane. A person counted every dog without looking at Seventy’s answer, then
+            checked {t.frames} frames one dog at a time against SAM 3.1’s boxes. Open any walk and check its work.
           </p>
         </div>
 
@@ -37,47 +41,57 @@ export function Proof() {
           ))}
         </dl>
 
-        <ul className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
           {data.samples.map((s) => {
             const c = check.clips.find((x) => x.slug === s.slug);
             return (
-              <li key={s.slug}>
-                <a href={`/eval/${s.slug}.jpg`} target="_blank" rel="noreferrer" className="group panel flex h-full flex-col overflow-hidden">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-canvas-2">
-                    <Image
-                      src={`/eval/${s.slug}.jpg`}
-                      alt={`Every checked frame of the ${s.title.toLowerCase()} clip, with SAM 3.1’s boxes in green and missed dogs in amber`}
-                      fill
-                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover object-left-top"
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <h3 className="text-lg font-semibold tracking-[-0.01em]" style={{ fontStretch: "106%" }}>
-                      {s.title}
-                    </h3>
-                    <dl className="num mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[0.9375rem] [&_dd]:text-right">
-                      <dt className="text-ink-2">Dogs counted</dt>
-                      <dd className="font-semibold">
-                        {s.seventy} of {s.hand}
-                      </dd>
-                      {c && (
-                        <>
-                          <dt className="text-ink-2">False alarms in {c.frames} frames</dt>
-                          <dd className="font-semibold">{c.false}</dd>
-                        </>
-                      )}
-                    </dl>
-                    <p className="mt-3 flex-1 text-[0.9375rem] text-ink-3">{"found" in s && s.found ? s.found : "Every dog counted once."}</p>
-                    <span className="mt-4 font-semibold group-hover:underline">See the frames</span>
-                  </div>
-                </a>
+              <li key={s.slug} className="panel flex flex-col overflow-hidden">
+                <Link href={`/app/walks/${s.walk}`} className="group relative block aspect-[16/9] overflow-hidden bg-canvas-2">
+                  <Image
+                    src={`/samples/${s.slug}.jpg`}
+                    alt={`A close-up Seventy cut of one dog from the ${s.title.toLowerCase()} walk`}
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover:scale-[1.03]"
+                  />
+                </Link>
+                <div className="flex flex-1 flex-col p-6 md:p-7">
+                  <p className="text-[0.875rem] text-ink-3">
+                    {s.place}, {s.seconds} seconds, {s.mode.toLowerCase()}
+                  </p>
+                  <h3 className="mt-1 text-2xl font-semibold tracking-[-0.015em]" style={{ fontStretch: "106%" }}>
+                    {s.title}
+                  </h3>
+                  <p className="mt-3 text-ink-2">{s.line}</p>
+                  <dl className="num mt-5 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 border-t border-line pt-4 text-[0.9375rem] [&_dd]:text-right">
+                    <dt className="text-ink-2">Dogs counted, against the hand count</dt>
+                    <dd className="font-semibold">
+                      {s.seventy} of {s.hand}
+                    </dd>
+                    {c && (
+                      <>
+                        <dt className="text-ink-2">False alarms in {c.frames} checked frames</dt>
+                        <dd className="font-semibold">{c.false}</dd>
+                      </>
+                    )}
+                  </dl>
+                  {"found" in s && s.found ? <p className="mt-3 text-[0.9375rem] text-ink-3">{s.found}</p> : null}
+                  <p className="mt-auto flex flex-wrap items-center gap-x-6 gap-y-2 pt-6">
+                    <Link href={`/app/walks/${s.walk}`} className="font-semibold hover:underline">
+                      Open the survey
+                    </Link>
+                    <a href={`/eval/${s.slug}.jpg`} target="_blank" rel="noreferrer" className="link text-ink-2">
+                      See the checked frames
+                    </a>
+                  </p>
+                </div>
               </li>
             );
           })}
         </ul>
         <p className="mt-6 max-w-3xl text-[0.875rem] text-ink-3">
-          The hand labels, SAM 3.1’s boxes and the script that scores them are public in the repository, and every change is scored again.
+          Each walk ran through the same pipeline as a full ten-minute survey. The hand labels, SAM 3.1’s boxes and the script that scores them are
+          public in the repository, and every change is scored again.
         </p>
       </div>
     </section>

@@ -8,7 +8,8 @@ type Report = {
   decision: string;
   next_steps: string[];
   context: string;
-  limits: string[];
+  notes?: string[];
+  limits?: string[];
   sources: { title: string; url: string; supports: string }[];
 };
 
@@ -61,7 +62,7 @@ export function ReportPanel({ walkId, owner }: { walkId: string; owner: boolean 
 
   return (
     <section className="mt-16" aria-busy={busy}>
-      <h2 className="text-xl font-semibold tracking-[-0.01em]">Program report</h2>
+      <h2 className="text-xl font-semibold tracking-[-0.01em]">Programme report</h2>
       <p className="mt-1 text-ink-2">Written by Muse Wonder from this survey’s numbers, with the rules it relies on found by web search and cited.</p>
       {!report && (
         <div className="panel mt-5 flex flex-col items-start gap-4 p-7 sm:flex-row sm:items-center sm:justify-between">
@@ -90,12 +91,16 @@ export function ReportPanel({ walkId, owner }: { walkId: string; owner: boolean 
             <p className="mt-3 leading-relaxed text-ink-2">
               <Cited text={report.context} sources={report.sources} />
             </p>
-            <h3 className="mt-10 font-semibold">Limits of this survey</h3>
-            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-ink-2 marker:text-ink-3">
-              {report.limits.map((l, i) => (
-                <li key={i}>{l}</li>
-              ))}
-            </ul>
+            {report.notes?.length ? (
+              <>
+                <h3 className="mt-10 font-semibold">For the next walk</h3>
+                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-ink-2 marker:text-ink-3">
+                  {report.notes.map((l, i) => (
+                    <li key={i}>{l}</li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
           </div>
           <aside className="col-span-12 lg:col-span-4">
             <h3 className="font-semibold">Sources</h3>

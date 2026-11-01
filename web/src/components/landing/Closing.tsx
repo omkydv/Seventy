@@ -10,9 +10,9 @@ export function FinalCta() {
         alt="Wide green fields under a pale morning sky."
         fill
         sizes="100vw"
-        className="object-cover object-[50%_38%]"
+        className="object-cover object-[50%_12%]"
       />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-[rgb(242_246_249/0.55)] via-[rgb(242_246_249/0.12)] to-transparent" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-[rgb(242_246_249/0.72)] via-[rgb(242_246_249/0.3)] to-transparent" />
       <div className="shell relative flex min-h-[86svh] flex-col justify-start pb-40 pt-24 md:pt-28">
         <h2 className="display max-w-3xl text-5xl text-ink md:text-[5rem] md:leading-[0.98]">Walk one street tomorrow morning.</h2>
         <p className="lede mt-6 max-w-xl text-[#24364a]">Ten minutes with a phone, then the answer. Start with a real survey to see how it reads.</p>

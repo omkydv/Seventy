@@ -11,20 +11,22 @@ export type Report = {
   decision: string;
   next_steps: string[];
   context: string;
-  limits: string[];
+  /** For the next walk; reports written before Nov 1 carry `limits` instead. */
+  notes?: string[];
+  limits?: string[];
   sources: { title: string; url: string; supports: string }[];
 };
 
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["headline", "decision", "next_steps", "context", "limits", "sources"],
+  required: ["headline", "decision", "next_steps", "context", "notes", "sources"],
   properties: {
     headline: { type: "string" },
     decision: { type: "string" },
     next_steps: { type: "array", items: { type: "string" } },
     context: { type: "string" },
-    limits: { type: "array", items: { type: "string" } },
+    notes: { type: "array", items: { type: "string" } },
     sources: {
       type: "array",
       items: {
@@ -37,39 +39,60 @@ const SCHEMA = {
   },
 };
 
-const INSTRUCTIONS = `You write the program report for one survey walk, for a district veterinary officer or a rabies program manager.
+const INSTRUCTIONS = `You write the programme report for one survey walk, for a district veterinary officer or a rabies programme manager.
 
 Rules:
 - Every number about this walk must come from the facts you are given. Do not compute new statistics. Do not round differently.
+- Write every fact in plain words. Never quote a field name, a key, a status code or anything with an underscore, and never put a value in quotation marks.
+- A count walk ("purpose": a count before a drive) answers how many dogs there are and how many doses to bring. Do not mention coverage or percentages of dogs marked for a count walk.
+- A check walk with "coverage" null has fewer readable dogs than Seventy needs to call coverage. Say how many dogs were read and that a longer walk through the area gives enough to call it. Do not state a coverage percentage.
 - Use web search to find the rules and targets that apply in the walk's country right now: national rabies strategy targets, dog vaccination or sterilization rules, and the WHO 70% coverage guidance. Cite what you use in "sources", with the exact page URL and one line on what it supports.
-- headline: one sentence that states the result with its main number.
+- headline: one sentence with the result and its main number, as the team would say it.
 - decision: two or three sentences on what this means for the team tomorrow.
-- next_steps: three to five concrete actions, each one sentence, using the walk's numbers (for example how many more dogs to vaccinate among those seen). Never recommend culling or removing dogs.
+- next_steps: three to five concrete actions, each one sentence, using the walk's numbers (for example how many doses to bring, or how many more dogs to vaccinate among those seen). Never recommend culling or removing dogs.
 - context: one short paragraph that places the result against the national target and the rules you found. Mark each claim from a source with [1], [2] in the order of "sources".
-- limits: two to four honest limits of this walk (for example dogs that could not be read, a single route, time of day).
-- Plain, calm language. No marketing words, no exclamation marks, no em dashes.`;
+- notes: one or two practical notes for the team's next walk of this area (for example the time of day dogs are out, or walking the side streets).
+- Plain, calm, confident language. No marketing words, no exclamation marks, no em dashes.`;
 
 type Facts = Record<string, unknown>;
 
+const MARK_WORDS: Record<string, string> = { paint: "paint", collar: "collar", ear_tag: "ear tag" };
+const STATUS_WORDS: Record<string, string> = {
+  confident: "complete: the whole 95% interval is above the line",
+  complete: "complete, though the lower end of the 95% interval is below the line",
+  below: "below the 70% line",
+  insufficient: "too few readable dogs to call yet; Seventy calls coverage from ten",
+};
+
+/** The walk's facts in words a model can repeat without leaking field names or codes. */
 export function factsFor(walk: Record<string, unknown>, stats: Record<string, unknown> | null, dogs: number): Facts {
   const ci = (stats?.ci ?? {}) as { p?: number; low?: number; high?: number };
-  return {
-    area: walk.area_name ?? walk.title ?? "unnamed route",
-    country: walk.country && walk.country !== "Not given" ? walk.country : "not given; use WHO global guidance",
-    date: walk.recorded_at ?? walk.created_at,
-    walk_minutes: walk.duration_s ? Math.round((Number(walk.duration_s) / 60) * 10) / 10 : null,
-    mode: walk.mode === "plan" ? "plan (before a vaccination drive)" : "check (after a drive)",
-    question: walk.mode === "plan" ? "how many dogs are here" : walk.target_mark === "sterilization" ? "sterilization coverage (ear notch)" : "vaccination coverage (paint or collar marks)",
+  const seconds = walk.duration_s ? Math.round(Number(walk.duration_s)) : null;
+  const length = seconds == null ? "not recorded" : seconds < 90 ? `${seconds} seconds` : `${Math.round(seconds / 60)} minutes`;
+  const when = new Date(String(walk.recorded_at ?? walk.created_at));
+  const common = {
+    area: walk.area_name ?? walk.title ?? "an unnamed route",
+    country: walk.country && walk.country !== "Not given" ? walk.country : "not given, so use WHO global guidance",
+    date: Number.isNaN(when.getTime()) ? "not recorded" : when.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+    length_of_video: length,
     dogs_counted_once: dogs,
-    marked: stats?.marked ?? 0,
-    unmarked: stats?.unmarked ?? 0,
-    could_not_read: stats?.unknown ?? 0,
-    coverage_percent: ci.p != null ? Math.round(ci.p * 1000) / 10 : null,
-    interval_95_percent: ci.low != null && ci.high != null ? [Math.round(ci.low * 1000) / 10, Math.round(ci.high * 1000) / 10] : null,
-    status: stats?.status ?? null,
-    more_dogs_to_vaccinate_among_seen: stats?.toGo ?? null,
-    doses_for_70_percent_of_dogs_seen: Math.ceil(TARGET * dogs),
-    target_percent: TARGET * 100,
+    target: `${TARGET * 100}% of dogs vaccinated`,
+  };
+  if (walk.mode === "plan") {
+    return { ...common, purpose: "a count before a vaccination drive", doses_to_reach_70_percent_of_dogs_seen: Math.ceil(TARGET * dogs) };
+  }
+  const marks = ((walk.mark_types as string[]) ?? []).map((k) => MARK_WORDS[k] ?? k).join(" or ") || "paint";
+  const enough = stats?.status !== "insufficient" && ci.p != null;
+  return {
+    ...common,
+    purpose: "a check after a vaccination drive",
+    question: walk.target_mark === "sterilization" ? "the share of dogs sterilized, read from the ear notch" : `the share of dogs vaccinated, read from the ${marks}`,
+    dogs_marked: stats?.marked ?? 0,
+    dogs_not_marked: stats?.unmarked ?? 0,
+    dogs_too_far_or_blurred_to_read: stats?.unknown ?? 0,
+    coverage: enough ? `${Math.round(ci.p! * 1000) / 10}% (95% interval ${Math.round(ci.low! * 1000) / 10}% to ${Math.round(ci.high! * 1000) / 10}%)` : null,
+    result: STATUS_WORDS[String(stats?.status)] ?? "not yet known",
+    more_dogs_to_vaccinate_among_those_seen: enough ? (stats?.toGo ?? null) : null,
   };
 }
 

@@ -105,6 +105,8 @@ function secondLines(d: Dog): { text: string; split: boolean }[] {
   if (!second || !d.mark) return [];
   return (["collar", "ear_tag"] as const)
     .filter((k) => second[k])
+    // Once a dog's status is settled, an old disagreement is no longer news.
+    .filter((k) => !disagrees(d.mark!, k) || effectiveStatus(d) === "unknown")
     .map((k) => {
       const split = disagrees(d.mark!, k);
       return {
@@ -174,7 +176,7 @@ function Verdict({ walk, st, dogs }: { walk: WalkState["walk"]; st: WalkStats; d
         ? { text: "Complete, not yet certain", tone: "bg-mark-soft" }
         : st.status === "below"
           ? { text: "Below the 70% line", tone: "bg-amber-soft" }
-          : { text: "Too few dogs to call", tone: "bg-canvas-2" };
+          : { text: "Needs ten readable dogs", tone: "bg-canvas-2" };
   const next =
     st.status === "confident"
       ? "The whole interval clears the line. The team can move on to the next area."
@@ -202,9 +204,9 @@ function Verdict({ walk, st, dogs }: { walk: WalkState["walk"]; st: WalkStats; d
         </>
       ) : (
         <>
-          <p className="display mt-2 text-balance text-[2.25rem] leading-[1.04]">Not enough dogs yet.</p>
+          <p className="display mt-2 text-balance text-[2.25rem] leading-[1.04]">Coverage is called from ten readable dogs.</p>
           <p className="num mt-3 text-ink-2">
-            Seventy could read {st.readable ? st.readable : "none"} of the {plural(st.dogs, "dog")}. It makes a call once it can read ten.
+            Seventy read {st.readable ? st.readable : "none"} of the {plural(st.dogs, "dog")} on this walk, so it doesn’t guess a percentage yet.
           </p>
         </>
       )}
@@ -533,14 +535,14 @@ export function Results({ state, onChange }: { state: WalkState; onChange: (s: W
       {unknown.length > 0 && state.walk.mode === "check" && (
         <div className="mt-10 flex flex-col gap-3 rounded-[18px] bg-surface px-6 py-5 shadow-[inset_0_0_0_1px_var(--line-strong)] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            <span className="font-semibold">{plural(unknown.length, "dog")} need a person’s eyes.</span>{" "}
+            <span className="font-semibold">{plural(unknown.length, "dog")} too far away to read.</span>{" "}
             <span className="text-ink-2">
-              The model couldn’t see their marks clearly. Look at each close-up and its ears, then choose.
+              Seventy keeps them out of the coverage instead of guessing. Open their close-ups to settle any you can.
               {!state.owner ? " This is a sample survey: try it, and your choices stay in this browser." : ""}
             </span>
           </p>
           <button type="button" onClick={() => setFilter(filter === "unknown" ? "all" : "unknown")} className="btn btn-secondary btn-sm shrink-0">
-            {filter === "unknown" ? "Show every dog" : "Review them"}
+            {filter === "unknown" ? "Show every dog" : "Show them"}
           </button>
         </div>
       )}

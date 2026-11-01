@@ -266,7 +266,14 @@
   }
 }
 
-
-
-
-
+/* The replay's frame before its script sizes it, the same way, so nothing jumps on load. */
+.replay-frame {
+  aspect-ratio: var(--ar-narrow);
+  width: min(100%, calc(max(240px, var(--max-h)) * var(--ar-narrow)));
+}
+@media (min-width: 640px) {
+  .replay-frame {
+    aspect-ratio: var(--ar);
+    width: min(100%, calc(max(240px, var(--max-h)) * var(--ar)));
+  }
+}

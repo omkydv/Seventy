@@ -5,6 +5,7 @@ import { CoverageMeter } from "@/components/CoverageMeter";
 import { DogGlyph } from "@/components/DogGlyph";
 import { PhotoCropClient } from "@/components/PhotoCropClient";
 import { SamPhoto } from "@/components/SamPhoto";
+import report from "@/content/report-sample.json";
 import type { Box, Outline } from "@/lib/sam/protocol";
 
 export type HowData = {
@@ -12,7 +13,6 @@ export type HowData = {
   parking: { width: number; height: number; dogs: Outline[] };
   reading: { reason: string; paint: string; ear: string; seconds: number };
   example: { p: number; low: number; high: number; marked: number; unmarked: number };
-  population: { n1: number; n2: number; m: number; n: number; low: number; high: number };
 };
 
 function WalkVisual() {
@@ -28,16 +28,17 @@ function WalkVisual() {
         sizes="(min-width: 1024px) 55vw, 100vw"
         className="absolute inset-0"
       />
+      {/* The app's own upload step, as it reads for a ten-minute walk. */}
       <div className="absolute inset-x-5 bottom-5 rounded-[16px] bg-white/94 p-4 text-[#0c1a28]">
-        <div className="flex items-center justify-between text-[0.9375rem] font-semibold">
-          <span>Recording the walk</span>
-          <span>4:12 of 10:00</span>
+        <div className="flex items-center justify-between gap-3 text-[0.9375rem] font-semibold">
+          <span>Sending 8 of 20 pieces</span>
+          <span className="num font-normal text-[#3d4f63]">10 minutes of video</span>
         </div>
         <div className="mt-3 h-1.5 rounded-full bg-[#e7eef3]">
-          <div className="h-full w-[42%] rounded-full bg-[#0c1a28]" />
+          <div className="h-full w-[40%] rounded-full bg-[#0c1a28]" />
         </div>
         <p className="mt-3 text-[0.875rem] text-[#3d4f63]">
-          The phone keeps the original. It sends a small copy, five frames a second, for counting.
+          The phone keeps the original. The browser sends a small copy, five frames a second, and counting starts on the first piece.
         </p>
       </div>
     </div>
@@ -119,34 +120,29 @@ function DecideVisual({ e }: { e: HowData["example"] }) {
   );
 }
 
-function PlanVisual({ p }: { p: HowData["population"] }) {
-  const row = (n: number, matched: number) => (
-    <div className="flex flex-wrap gap-1.5">
-      {Array.from({ length: n }, (_, i) => (
-        <DogGlyph key={i} status={i < matched ? "marked" : "unmarked"} size={18} />
-      ))}
-    </div>
-  );
+function ReportVisual() {
   return (
-    <div className="flex h-full flex-col justify-center gap-6 bg-white p-7 text-[#0c1a28] sm:p-10">
-      <div>
-        <p className="text-[0.9375rem] font-semibold">Walk one, Tuesday</p>
-        <p className="mb-2 text-[0.875rem] text-[#6e7f91]">{p.n1} dogs seen</p>
-        {row(p.n1, p.m)}
-      </div>
-      <div>
-        <p className="text-[0.9375rem] font-semibold">Walk two, Wednesday</p>
-        <p className="mb-2 text-[0.875rem] text-[#6e7f91]">
-          {p.n2} dogs seen, {p.m} recognised from walk one
-        </p>
-        {row(p.n2, p.m)}
-      </div>
+    <div className="flex h-full flex-col justify-center gap-5 bg-white p-7 text-[#0c1a28] sm:p-10">
+      <p className="text-[0.9375rem] text-[#3d4f63]">Programme report, written by Muse Wonder</p>
+      <p className="display-quiet text-2xl leading-snug sm:text-[1.75rem]">{report.headline}</p>
+      <ol className="space-y-2 text-[0.9375rem] text-[#3d4f63]">
+        {report.next_steps.map((s, i) => (
+          <li key={s} className="grid grid-cols-[1.5rem_1fr]">
+            <span className="num font-semibold text-[#6e7f91]">{i + 1}</span>
+            <span>{s}</span>
+          </li>
+        ))}
+      </ol>
       <div className="rounded-[16px] bg-[#f2f6f9] p-5">
-        <p className="text-[0.9375rem] text-[#3d4f63]">Dogs living on this route</p>
-        <p className="display text-5xl">About {Math.round(p.n)}</p>
-        <p className="mt-1 text-[0.875rem] text-[#6e7f91]">
-          95% interval {Math.round(p.low)} to {Math.round(p.high)}. Worked example with illustrative counts.
-        </p>
+        <p className="text-[0.875rem] font-semibold">Sources found by web search</p>
+        <ol className="mt-2 space-y-1 text-[0.875rem] text-[#3d4f63]">
+          {report.sources.map((s, i) => (
+            <li key={s} className="grid grid-cols-[1.5rem_1fr]">
+              <span className="num font-semibold text-mark-strong">{i + 1}</span>
+              <span>{s}</span>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   );
@@ -159,7 +155,7 @@ export function HowItWorks({ data }: { data: HowData }) {
   const steps: Step[] = [
     {
       title: "Walk the street",
-      body: "The surveyor walks the area as before, filming instead of counting. Any phone works. Ten minutes covers a typical ward.",
+      body: "The surveyor walks the area as before, filming instead of counting, then adds the video to Seventy. Any phone works. Ten minutes covers a typical ward.",
       meta: "A ten-minute walk is 3,000 frames at five a second.",
       visual: <WalkVisual />,
     },
@@ -172,7 +168,7 @@ export function HowItWorks({ data }: { data: HowData }) {
     {
       title: "Read every mark",
       body: "For each dog, Seventy cuts the sharpest close-ups from the original video. SAM 3.1 finds the ears and enlarges them, and Muse Spark reads what is there: paint, a collar, an ear tag, a sterilization notch, or that it can’t see well enough to say. For collars and ear tags, SAM 3.1 looks for the mark too, as a second opinion.",
-      meta: "When the models can’t tell or don’t agree, a person decides.",
+      meta: "A dog too far or blurred to read is kept out of the coverage, never guessed.",
       visual: <ReadVisual data={data.lane} reading={data.reading} />,
     },
     {
@@ -183,10 +179,10 @@ export function HowItWorks({ data }: { data: HowData }) {
       flow: true,
     },
     {
-      title: "Plan the next drive",
-      body: "The matching that keeps a dog counted once can also recognise it on a second walk of the same route. Chapman’s mark–resight formula, a standard method in field ecology, turns two walks into an estimate of how many dogs live there, without catching a single one.",
-      meta: "Worked example with illustrative counts. Muse Wonder then writes the report, with every rule it relies on cited.",
-      visual: <PlanVisual p={data.population} />,
+      title: "Report to the office",
+      body: "Muse Wonder writes one page for the district office: the result in a sentence, what to do tomorrow, and the WHO and national rules behind it, found by web search and cited.",
+      meta: "From the report on the mountain village walk.",
+      visual: <ReportVisual />,
       flow: true,
     },
   ];
@@ -213,8 +209,7 @@ export function HowItWorks({ data }: { data: HowData }) {
         <div className="max-w-3xl">
           <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Seventy turns the same walk into evidence.</h2>
           <p className="lede mt-8 max-w-2xl">
-            Five steps from a phone video to a decision. Every picture in this section is real output from Meta’s models on
-            real photographs.
+            Five steps from a phone video to a decision, shown with real output from Meta’s models.
           </p>
         </div>
 
@@ -248,7 +243,7 @@ export function HowItWorks({ data }: { data: HowData }) {
                   refs.current[i] = el;
                 }}
                 data-index={i}
-                className="flex flex-col justify-center py-10 lg:min-h-[76vh] lg:py-0"
+                className="flex flex-col justify-center py-10 lg:min-h-[58vh] lg:py-0"
               >
                 <div className={`panel relative mb-8 overflow-hidden lg:hidden ${s.flow ? "" : "aspect-[4/3]"}`}>{s.visual}</div>
                 <div

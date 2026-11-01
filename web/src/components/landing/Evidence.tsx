@@ -53,8 +53,8 @@ export function Evidence() {
           </div>
           <div className="col-span-12 lg:col-span-6 lg:col-start-7">
             <p className="lede">
-              The arithmetic stays in plain code: tracks stitched across pieces of a long walk, a Wilson interval for coverage, Chapman’s formula for
-              populations. When a model can’t see something, it says so, and a person makes the call.
+              The arithmetic stays in plain code: tracks stitched across pieces of a long walk, a Wilson interval for coverage, and doses worked out from the
+              count. When a model can’t see a mark, it says so, and the dog is kept out of the coverage instead of guessed.
             </p>
             <p className="mt-6 text-ink-2">
               It never follows people. SAM 3.1 looks for people only to blur them; nobody is tracked, counted or identified, and the original video stays

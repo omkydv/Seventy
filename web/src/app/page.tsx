@@ -7,21 +7,18 @@ import { Hero } from "@/components/landing/Hero";
 import { HowItWorks, type HowData } from "@/components/landing/HowItWorks";
 import { Next } from "@/components/landing/Next";
 import { Paid } from "@/components/landing/Paid";
-import { Places } from "@/components/landing/Places";
 import { Possible } from "@/components/landing/Possible";
 import { Problem } from "@/components/landing/Problem";
-import { Programme } from "@/components/landing/Programme";
 import { Proof } from "@/components/landing/Proof";
 import { Users } from "@/components/landing/Users";
 import marks from "@/content/sam/lane-dawn-dog.marks.json";
 import { loadPhotoSegmentation } from "@/lib/sam/photos";
-import { chapman, coverage } from "@/lib/stats";
+import { coverage } from "@/lib/stats";
 
 async function howData(): Promise<HowData> {
   const [lane, parking] = await Promise.all([loadPhotoSegmentation("lane-dawn-dog"), loadPhotoSegmentation("dogs-parking")]);
   const ear = lane.outlines["dog ear"] ?? [];
   const example = coverage(284, 112, 0);
-  const pop = chapman(30, 28, 18);
   const r = marks.reading;
   return {
     lane: {
@@ -38,7 +35,6 @@ async function howData(): Promise<HowData> {
       seconds: marks.seconds,
     },
     example: { p: example.ci.p, low: example.ci.low, high: example.ci.high, marked: example.marked, unmarked: example.unmarked },
-    population: { n1: 30, n2: 28, m: 18, n: pop.n, low: pop.low, high: pop.high },
   };
 }
 
@@ -53,11 +49,9 @@ export default async function Home() {
         <Paid />
         <Compare />
         <HowItWorks data={data} />
-        <Places />
-        <Users />
-        <Programme />
-        <Proof />
         <Evidence />
+        <Proof />
+        <Users />
         <Possible />
         <Next />
         <FinalCta />

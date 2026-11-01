@@ -25,7 +25,7 @@ function Summary({ w }: { w: Row }) {
   const st = w.stats;
   if (!st) return <span className="text-ink-3">{IN_PROGRESS[w.status] ?? "In progress"}</span>;
   if (w.mode === "plan") return <span className="num font-semibold">{plural(st.dogs, "dog")}</span>;
-  if (st.status === "insufficient") return <span className="pill bg-canvas-2 text-ink">Too few dogs to call</span>;
+  if (st.status === "insufficient") return <span className="pill bg-canvas-2 text-ink">Needs ten readable dogs</span>;
   return (
     <span className={`pill num text-ink ${st.status === "below" ? "bg-amber-soft" : "bg-mark-soft"}`}>
       {(st.ci.p * 100).toFixed(0)}% {w.target_mark === "sterilization" ? "sterilized" : "vaccinated"}
@@ -94,36 +94,16 @@ export function WalkList() {
 
   return (
     <div className="mt-10 space-y-16">
-      <section aria-labelledby="mine">
-        <h2 id="mine" className="sr-only">
-          Your surveys
-        </h2>
-        {data.mine.length ? (
-          <List rows={data.mine} />
-        ) : (
-          <div className="panel flex flex-col items-start gap-6 p-8 md:flex-row md:items-center md:justify-between md:p-10">
-            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
-              <span className="flex shrink-0 gap-1.5" aria-hidden>
-                <DogGlyph status="unmarked" size={34} />
-                <DogGlyph status="marked" size={34} />
-                <DogGlyph status="unknown" size={34} />
-              </span>
-              <div>
-                <p className="text-xl font-semibold tracking-[-0.01em]">No surveys yet</p>
-                <p className="mt-1 text-ink-2">Film a slow walk through an area, then add the video here.</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/app/new" className="btn btn-primary">
-                New survey
-              </Link>
-              <Link href="/app/demo" className="btn btn-secondary">
-                See a sample survey
-              </Link>
-            </div>
+      {data.mine.length > 0 && (
+        <section aria-labelledby="mine">
+          <h2 id="mine" className="display-quiet text-2xl md:text-3xl">
+            Your surveys
+          </h2>
+          <div className="mt-6">
+            <List rows={data.mine} />
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       <section aria-labelledby="samples">
         <h2 id="samples" className="display-quiet text-2xl md:text-3xl">
@@ -152,6 +132,25 @@ export function WalkList() {
           ))}
         </ul>
       </section>
+      {/* Without surveys of its own, a visitor starts from the samples, then their own walk. */}
+      {!data.mine.length && (
+        <section aria-labelledby="start" className="panel flex flex-col items-start gap-6 p-8 md:flex-row md:items-center md:justify-between md:p-10">
+          <div>
+            <h2 id="start" className="text-xl font-semibold tracking-[-0.01em]">
+              Count your own walk
+            </h2>
+            <p className="mt-1 text-ink-2">Add a phone video of a street, or run the full pipeline on our six-second market clip.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/app/new" className="btn btn-primary">
+              New survey
+            </Link>
+            <Link href="/app/new?sample=1" className="btn btn-secondary">
+              Try it with our walk
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

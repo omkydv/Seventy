@@ -3,7 +3,7 @@
 import { SegmentationRenderer, type VideoFrameCompositionContext } from "@meta-sam/graphics";
 import { decodeMaskToSVGPath, frameIndexOf, recordsOfKind, type SegmentationMask } from "@meta-sam/parser";
 import { createMediaPlayer, type IMediaPlayer } from "@meta-sam/video";
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type CSSProperties, type Ref } from "react";
 import { parseVideoText } from "@/lib/sam/protocol";
 import { clock } from "@/lib/format";
 
@@ -87,8 +87,14 @@ async function peopleByFrame(text: string): Promise<Map<number, Person[]>> {
 type Props = {
   chunks: ReplayChunk[];
   dogs: ReplayDog[];
-  /** Width over height of the tracked video, so portrait and wide walks both fit. */
+  /** Width over height of the frame on screen; by default the tracked video's, so portrait and wide walks both fit. */
   aspect?: number;
+  /** The frame's shape below 640 px wide, when it differs. */
+  narrowAspect?: number;
+  /** "cover" fills a frame of another shape by trimming the video's edges evenly. */
+  fit?: "contain" | "cover";
+  /** The frame never gets taller than this share of the screen. */
+  maxVh?: number;
   /** A dog to ring in white, by its number on the walk. */
   selected?: number | null;
   onTime?: (walkSeconds: number) => void;
@@ -105,6 +111,9 @@ export function WalkReplay({
   chunks,
   dogs,
   aspect = 16 / 9,
+  narrowAspect,
+  fit = "contain",
+  maxVh = 0.72,
   selected = null,
   onTime,
   autoPlay = false,
@@ -179,7 +188,7 @@ export function WalkReplay({
 
     const place = (c: VideoFrameCompositionContext) => {
       const { w: sw, h: sh } = sourceRef.current;
-      const scale = Math.min(c.canvas.width / sw, c.canvas.height / sh);
+      const scale = (fit === "cover" ? Math.max : Math.min)(c.canvas.width / sw, c.canvas.height / sh);
       return { scale, ox: (c.canvas.width - sw * scale) / 2, oy: (c.canvas.height - sh * scale) / 2 };
     };
 
@@ -273,7 +282,7 @@ export function WalkReplay({
     player.setCustomRender((c) => {
       // A canvas caught mid-layout can have no area for a frame; skip that frame rather than stop the player.
       if (!(c.canvas.width > 0 && c.canvas.height > 0)) return;
-      renderer.renderVideoFrame(c, { fit: "contain", devicePixelRatio: () => dprRef.current, hiddenIds: hiddenRef.current });
+      renderer.renderVideoFrame(c, { fit, devicePixelRatio: () => dprRef.current, hiddenIds: hiddenRef.current });
       blurPeople(c);
       drawLabels(c);
     });
@@ -295,9 +304,10 @@ export function WalkReplay({
     const resize = () => {
       dprRef.current = window.devicePixelRatio || 1;
       // Fill the width, but never taller than most of the screen; a portrait walk gets a narrower frame.
-      const maxH = Math.max(240, window.innerHeight * 0.72);
-      const h = Math.round(Math.min(outer.clientWidth / aspect, maxH));
-      const w = Math.round(Math.min(outer.clientWidth, h * aspect));
+      const shape = narrowAspect && !window.matchMedia("(min-width: 640px)").matches ? narrowAspect : aspect;
+      const maxH = Math.max(240, window.innerHeight * maxVh);
+      const h = Math.round(Math.min(outer.clientWidth / shape, maxH));
+      const w = Math.round(Math.min(outer.clientWidth, h * shape));
       // Hidden or still laying out: keep the last good size.
       if (!(w > 0 && h > 0)) return;
       wrap.style.width = `${w}px`;
@@ -385,8 +395,8 @@ export function WalkReplay({
       {/* The same size the resize effect computes, so the frame doesn't jump when the script loads. */}
       <div
         ref={wrapRef}
-        className={`relative mx-auto max-w-full overflow-hidden bg-[#08121c] ${rounded}`}
-        style={{ aspectRatio: aspect, width: `min(100%, calc(max(240px, 72vh) * ${aspect}))` }}
+        className={`replay-frame relative mx-auto max-w-full overflow-hidden bg-[#08121c] ${rounded}`}
+        style={{ "--ar": aspect, "--ar-narrow": narrowAspect ?? aspect, "--max-h": `${maxVh * 100}vh` } as CSSProperties}
       >
         {poster && (
           // eslint-disable-next-line @next/next/no-img-element
