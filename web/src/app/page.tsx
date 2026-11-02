@@ -22,19 +22,22 @@ export default async function Home() {
   return (
     <>
       <main>
+        {/* 1. What it is, working. 2. Why it matters. 3. The gap today. 4. Proof the need is paid for. */}
         <Hero />
         <Stakes />
         <Problem />
-        <ZeroBy30 />
         <Clipboard />
         <Paid />
+        {/* 5. Why AI closes the gap, how, and proof that it does. 6. Meta's models doing the work. */}
         <WhyAI />
         <HowItWorks data={data} />
-        <Evidence />
         <Proof />
+        <Evidence />
+        {/* 7. Who needs it, where it goes next, and the goal it serves. */}
         <Users />
-        <Possible />
         <Next />
+        <Possible />
+        <ZeroBy30 />
         <FinalCta />
       </main>
       <Footer />

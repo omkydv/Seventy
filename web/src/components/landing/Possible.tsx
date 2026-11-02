@@ -46,7 +46,7 @@ const rings = [
 
 export function Possible() {
   return (
-    <section id="possible" className="scroll-mt-6 bg-canvas py-28 md:py-40">
+    <section id="possible" className="scroll-mt-6 bg-surface py-28 md:py-40">
       <div className="shell">
         <div className="max-w-4xl">
           <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">What one walk could add up to.</h2>

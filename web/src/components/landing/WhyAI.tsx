@@ -66,7 +66,7 @@ const rows: Row[] = [
 /** Why counting by eye can't answer the 70% question, and what each Meta model changes. */
 export function WhyAI() {
   return (
-    <section id="why" className="scroll-mt-6 bg-canvas py-28 md:py-40">
+    <section id="why" className="scroll-mt-6 bg-surface py-28 md:py-40">
       <div className="shell">
         <div className="grid grid-cols-12 gap-y-8 lg:gap-x-8">
           <h2 className="display col-span-12 text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02] lg:col-span-7">

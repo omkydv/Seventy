@@ -26,7 +26,7 @@ const groups: { title: string; items: string[] }[] = [
 
 export function Next() {
   return (
-    <section id="next" className="scroll-mt-6 bg-surface py-28 md:py-36">
+    <section id="next" className="scroll-mt-6 bg-canvas py-28 md:py-36">
       <div className="shell">
         <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">What comes next.</h2>
         <div className="mt-14 grid grid-cols-1 gap-x-10 gap-y-12 md:grid-cols-3">
