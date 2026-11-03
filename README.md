@@ -293,6 +293,10 @@ Uploading later when the signal comes back. The app in the languages surveyors s
 
 The street videos are from Pexels and used under the Pexels License. The photographs on the landing page are from Pexels and Unsplash, credited on the page. Every person in the replays is pixelated.
 
+## Third-party code and assets
+
+All of Seventy's code was written during the event; no code from earlier projects is included. It uses open-source libraries, listed in `web/package.json`: Next.js, React, the Supabase client, Mediabunny, MapLibre and Meta's `@meta-sam` packages. Map tiles come from OpenFreeMap, with data from OpenStreetMap contributors. The sample street videos are used under the Pexels License, and the landing page photographs under the Pexels and Unsplash licenses, each credited on the page.
+
 ## Built during the hackathon
 
 All the code here was written between 26 October and 4 November 2026, by one person in a rural village, with a laptop and a phone.
