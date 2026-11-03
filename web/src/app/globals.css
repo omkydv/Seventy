@@ -228,6 +228,7 @@
     gap: 0.4rem;
     height: 28px;
     padding-inline: 0.7rem;
+    white-space: nowrap;
     border-radius: 999px;
     font-size: 0.8125rem;
     font-weight: 600;
@@ -306,4 +307,91 @@
     animation: none;
     stroke-dashoffset: 0;
   }
+}
+
+/* Processing screen: work happening, drawn in CSS so it never waits on the page's script. */
+.pipeline-scan {
+  background: linear-gradient(180deg, rgb(18 168 95 / 0) 0%, rgb(18 168 95 / 0.22) 70%, rgb(126 231 177 / 0.9) 100%);
+  border-bottom: 2px solid rgb(126 231 177 / 0.9);
+  animation: pipeline-scan 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes pipeline-scan {
+  from {
+    top: -6rem;
+  }
+  to {
+    top: 100%;
+  }
+}
+.pipeline-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.pipeline-sheen {
+  background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.35) 50%, transparent 80%);
+  background-size: 220% 100%;
+  animation: pipeline-sheen 1.6s linear infinite;
+}
+@keyframes pipeline-sheen {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+.pipeline-pop {
+  animation: pipeline-pop 380ms var(--ease-out-quint) both;
+}
+@keyframes pipeline-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pipeline-scan,
+  .pipeline-sheen,
+  .pipeline-pop {
+    animation: none;
+  }
+  .pipeline-scan {
+    display: none;
+  }
+}
+
+/* Map controls in the app's shapes and type. Selectors outrank MapLibre's own sheet, which loads later. */
+.maplibregl-map .maplibregl-ctrl-group:not(:empty) {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgb(var(--shadow) / 0.06), 0 6px 16px -8px rgb(var(--shadow) / 0.45);
+}
+.maplibregl-map .maplibregl-ctrl-group button {
+  width: 34px;
+  height: 34px;
+}
+.maplibregl-map .maplibregl-ctrl-attrib,
+.maplibregl-map .maplibregl-ctrl-scale,
+.maplibregl-map .maplibregl-cooperative-gesture-screen {
+  font-family: var(--font-mona), system-ui, sans-serif;
+}
+.maplibregl-map .maplibregl-ctrl-attrib {
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.maplibregl-map .maplibregl-ctrl-scale {
+  border-color: var(--ink-2);
+  background: rgb(255 255 255 / 0.85);
+  color: var(--ink-2);
+  font-size: 11px;
+}
+.maplibregl-map .maplibregl-cooperative-gesture-screen {
+  background: rgb(12 26 40 / 0.55);
+  font-size: 0.9375rem;
 }

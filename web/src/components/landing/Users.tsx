@@ -5,7 +5,7 @@ const teams = [
   {
     who: "Rabies vaccination programmes",
     asks: "Did this area reach 70%?",
-    gets: "Coverage with an honest margin, every dog’s mark as evidence, and the stretch of the walk where the missed dogs were.",
+    gets: "Coverage with an honest margin, every dog’s mark as evidence, and a map of where the missed dogs are, with directions back.",
     sample: { href: "/app/walks/887a06c9-3011-48c2-83ea-8ed9214ec3fe", label: "Open the ear-tag check" },
     art: Array.from({ length: 10 }, (_, i) => (i < 7 ? "marked" : "unmarked")) as ("marked" | "unmarked")[],
   },
@@ -19,7 +19,7 @@ const teams = [
   {
     who: "City animal services",
     asks: "How many roaming dogs, and where?",
-    gets: "Every dog counted once along the route, owned dogs on a lead set apart, and a record anyone can check later.",
+    gets: "Every dog counted once and placed on a map of the route, owned dogs on a lead set apart, and a record anyone can check later.",
     sample: { href: "/app/walks/35ffd9de-fba1-4eca-b699-88778ea210eb", label: "Open the mountain count" },
     art: Array.from({ length: 10 }, () => "unmarked") as ("marked" | "unmarked")[],
   },

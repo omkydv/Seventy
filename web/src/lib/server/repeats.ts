@@ -41,7 +41,7 @@ const centre = (b: [number, number, number, number]) => [(b[0] + b[2]) / 2, (b[1
 /**
  * SAM keeps a dog's number while it stays in view. When a track starts after
  * another one ended, Muse Spark compares their close-ups: a sure match is
- * counted once, an unsure one is kept for a person to decide.
+ * counted once, an unsure one stays as two dogs.
  */
 export async function checkRepeats(walkId: string, log: (row: { stage: string; model: string; units: number; unit: string; calls: number; seconds: number; cost_usd: number }) => Promise<void>) {
   const { data } = await db().from("dogs").select("id, label, first_s, last_s, samples, crops, mark").eq("walk_id", walkId).order("label");

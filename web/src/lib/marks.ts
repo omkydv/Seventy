@@ -46,7 +46,7 @@ export function classify(
     return { status: "unknown", kind: "unknown" };
   }
   const used = (["paint", "collar", "ear_tag"] as const).filter((k) => markTypes.includes(k));
-  // When the two Meta models disagree about a mark this walk counts, a person decides.
+  // When the two Meta models disagree about a mark this walk counts, neither answer stands.
   if (used.some((k) => k !== "paint" && disagrees(r, k))) return { status: "unknown", kind: "unknown" };
   const statusOf = (k: VaccinationMark) => (k === "ear_tag" ? r.ear_tag?.status : r[k].status);
   const hit = used.find((k) => statusOf(k) === "present");

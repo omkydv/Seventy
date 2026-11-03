@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CoverageMeter } from "@/components/CoverageMeter";
-import { DogGlyph } from "@/components/DogGlyph";
+import { DOG_PATH, DogGlyph } from "@/components/DogGlyph";
 import Image from "next/image";
 import { SamPhoto } from "@/components/SamPhoto";
 import report from "@/content/report-sample.json";
@@ -78,7 +78,7 @@ function EarTagVisual() {
             <p className="font-semibold text-mark-strong">Vaccinated</p>
           </div>
         </div>
-        <p className="mt-3 text-[0.875rem] text-[#3d4f63]">A municipal ear tag on a dog far down a seaside promenade, too small to read until SAM 3.1 enlarged the ear.</p>
+        <p className="mt-3 text-[0.875rem] text-[#3d4f63]">A municipal ear tag on a dog far down a seaside promenade, too small to see until SAM 3.1 found the ear and enlarged it.</p>
       </div>
     </div>
   );
@@ -103,6 +103,89 @@ function DecideVisual({ e }: { e: HowData["example"] }) {
       </div>
       <p className="mt-6 text-lg font-semibold">Complete, but not yet certain.</p>
       <p className="mt-1 text-[0.9375rem] text-[#3d4f63]">The estimate clears the line; the lower end of the interval does not.</p>
+    </div>
+  );
+}
+
+/**
+ * The go-back map in the app's own map language: the route, each dog where it was first seen,
+ * and the places with dogs to vaccinate ringed in amber. An illustration, not a recorded walk.
+ */
+function GoBackVisual() {
+  const route = "M40 520 H430 V330 H650 V140 H780";
+  const dogs: { x: number; y: number; marked: boolean }[] = [
+    { x: 105, y: 520, marked: true },
+    { x: 200, y: 520, marked: false },
+    { x: 248, y: 520, marked: false },
+    { x: 296, y: 520, marked: false },
+    { x: 430, y: 455, marked: true },
+    { x: 430, y: 385, marked: true },
+    { x: 528, y: 330, marked: false },
+    { x: 578, y: 330, marked: false },
+    { x: 650, y: 255, marked: true },
+    { x: 650, y: 185, marked: true },
+    { x: 725, y: 140, marked: true },
+  ];
+  const label = { fontSize: 20, fontWeight: 600, fill: "#7a4b02", fontFamily: "var(--font-mona), system-ui, sans-serif", textAnchor: "middle" as const };
+  return (
+    <div className="flex h-full w-full flex-col bg-[#e8eef3] lg:relative lg:block lg:overflow-hidden">
+      {/* On phones the map sits above its list; in the wide panel the list floats over the map. */}
+      <div className="relative aspect-[5/4] lg:absolute lg:inset-0 lg:aspect-auto">
+        <svg viewBox="0 0 800 640" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full" aria-hidden>
+          <g stroke="#ffffff" strokeWidth={26} strokeLinecap="round">
+            {[520, 330, 140].map((y) => (
+              <line key={`h${y}`} x1={-20} x2={820} y1={y} y2={y} />
+            ))}
+            {[170, 430, 650].map((x) => (
+              <line key={`v${x}`} x1={x} x2={x} y1={-20} y2={660} />
+            ))}
+          </g>
+          <circle cx={248} cy={520} r={74} fill="#f0a23a" fillOpacity={0.2} stroke="#c47a06" strokeWidth={2.5} />
+          <circle cx={553} cy={330} r={58} fill="#f0a23a" fillOpacity={0.2} stroke="#c47a06" strokeWidth={2.5} />
+          <path d={route} fill="none" stroke="#ffffff" strokeWidth={11} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={route} fill="none" stroke="#0c1a28" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx={40} cy={520} r={8} fill="#ffffff" stroke="#0c1a28" strokeWidth={4} />
+          <circle cx={780} cy={140} r={8} fill="#0c1a28" />
+          {dogs.map((d) => (
+            <g key={`${d.x}-${d.y}`}>
+              <circle cx={d.x} cy={d.y} r={17} fill="#ffffff" stroke="rgb(12 26 40 / 0.16)" strokeWidth={1} />
+              <path
+                d={DOG_PATH}
+                transform={`translate(${d.x - 10.5} ${d.y - 7}) scale(0.58)`}
+                fill={d.marked ? "#12a85f" : "#ffffff"}
+                stroke={d.marked ? "#12a85f" : "#0c1a28"}
+                strokeWidth={2.6}
+                strokeLinejoin="round"
+              />
+            </g>
+          ))}
+          <text x={248} y={428} {...label}>
+            Place 1
+          </text>
+          <text x={553} y={254} {...label}>
+            Place 2
+          </text>
+        </svg>
+      </div>
+      <div className="m-4 rounded-[16px] bg-white/95 p-4 text-[#0c1a28] shadow-[0_12px_32px_-16px_rgb(8_18_28/0.5)] lg:absolute lg:left-5 lg:top-5 lg:m-0 lg:w-[17.5rem]">
+        <p className="font-semibold">Where to go back</p>
+        <p className="mt-0.5 text-[0.875rem] text-[#3d4f63]">5 dogs not marked, in 2 places along the route.</p>
+        <ol className="mt-3 space-y-2 text-[0.875rem]">
+          {[
+            ["Place 1", "3 dogs, 160 m from the start"],
+            ["Place 2", "2 dogs, 420 m from the start"],
+          ].map(([p, what]) => (
+            <li key={p} className="flex items-center justify-between gap-3 rounded-[12px] bg-[#f2f6f9] px-3 py-2">
+              <span>
+                <span className="font-semibold">{p}</span>
+                <span className="block text-[#3d4f63]">{what}</span>
+              </span>
+              <span className="font-semibold text-[#3d4f63]">Directions</span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 rounded-[10px] py-1.5 text-center text-[0.875rem] font-semibold shadow-[inset_0_0_0_1px_#c7d2dc]">Send to the team</p>
+      </div>
     </div>
   );
 }
@@ -142,7 +225,7 @@ export function HowItWorks({ data }: { data: HowData }) {
   const steps: Step[] = [
     {
       title: "Walk the street",
-      body: "The surveyor walks the area as before, filming instead of counting, then adds the video to Seventy. Any phone works. Ten minutes covers a typical ward.",
+      body: "The surveyor walks the area as before, filming instead of counting. Recording inside Seventy also saves the phone’s route; a video from any phone camera works too. Ten minutes covers a typical ward.",
       meta: "A ten-minute walk is 3,000 frames at five a second.",
       visual: <WalkVisual />,
     },
@@ -164,6 +247,13 @@ export function HowItWorks({ data }: { data: HowData }) {
       body: "Coverage comes with a 95% interval, and dogs that couldn’t be read are counted and shown, never hidden. The team sees whether the area is done, nearly done, or needs another round.",
       meta: "Example using counts from a published 2026 campaign survey.",
       visual: <DecideVisual e={data.example} />,
+      flow: true,
+    },
+    {
+      title: "Go back where dogs were missed",
+      body: "On a recorded walk, every dog sits on a map where it was first seen. The dogs still to vaccinate are grouped into places along the route, each with walking directions, and the list goes to the team’s chat in one tap. The mop-up goes only where it is needed.",
+      meta: "An illustration of the go-back map. In the app it is drawn on real streets, from the phone’s GPS.",
+      visual: <GoBackVisual />,
       flow: true,
     },
     {
@@ -197,7 +287,7 @@ export function HowItWorks({ data }: { data: HowData }) {
         <div className="max-w-3xl">
           <h2 className="display text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02]">Seventy turns the same walk into evidence.</h2>
           <p className="lede mt-8 max-w-2xl">
-            Five steps from a phone video to a decision, shown with real output from Meta’s models.
+            Six steps from a phone video to a decision, and to the streets the team still has to visit, shown with real output from Meta’s models.
           </p>
         </div>
 

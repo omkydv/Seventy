@@ -37,6 +37,11 @@ const CreateWalk = z.object({
   srcFps: z.number().positive().nullable().optional(),
   sourceName: z.string().max(200).optional(),
   procFps: z.number().min(2).max(10).optional(),
+  // Recorded in Seventy: where the phone was, [seconds into the video, lat, lon, accuracy in metres].
+  route: z
+    .object({ points: z.array(z.tuple([z.number().min(0), z.number().min(-90).max(90), z.number().min(-180).max(180), z.number().min(0)])).max(5000) })
+    .nullable()
+    .optional(),
 });
 
 export const POST = handle(async (req: Request) => {

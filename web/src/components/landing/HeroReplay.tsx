@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DogGlyph } from "@/components/DogGlyph";
-import { WalkReplay } from "@/components/WalkReplay";
 import hero from "@/content/hero/mountain-village.json";
 import { TARGET } from "@/lib/stats";
 
-const chunks = [{ idx: 0, startS: 0, video: "/hero/mountain-village.mp4", sam: "/hero/mountain-village.dogs.txt", people: null }];
-const dogs = hero.dogs.map((d) => ({ label: d.label, status: "counted", segments: d.segments }));
 const doses = Math.ceil(TARGET * hero.dogs.length);
 // Dogs in the order SAM first sees them, so the row fills the way the count grows.
 const order = [...hero.dogs].sort((a, b) => a.firstS - b.firstS);
@@ -41,13 +38,59 @@ function Status({ state, delay }: { state: "done" | "active" | "waiting"; delay:
 }
 
 /**
- * The product running, framed as the app shows it: SAM 3.1's real output on a real walk,
- * drawn in the browser, beside the answer it adds up to.
+ * The product running, framed as the app shows it: SAM 3.1's real output on a real walk
+ * (drawn by the app's own replay and saved as video), beside the answer it adds up to.
+ * The video waits until the page and its headline have finished, so neither waits on it.
  */
 export function HeroReplay() {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [t, setT] = useState(0);
-  const [still] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  const seen = still ? order.length : order.filter((d) => d.firstS <= t + 0.04).length;
+  const [still, setStill] = useState(false);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const id = window.setTimeout(() => setStill(true), 0);
+      return () => window.clearTimeout(id);
+    }
+    let raf = 0;
+    let timer = 0;
+    const tick = () => {
+      setT(v.currentTime);
+      raf = requestAnimationFrame(tick);
+    };
+    const begin = () => {
+      v.preload = "auto";
+      v.src = "/hero/mountain-village-sam.mp4";
+      v.play().catch(() => {});
+    };
+    const onPlaying = () => {
+      setStarted(true);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(tick);
+    };
+    v.addEventListener("playing", onPlaying);
+    // After the page has loaded and the headline's underline has drawn.
+    const later = () => {
+      timer = window.setTimeout(() => {
+        const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+        if (idle) idle(begin, { timeout: 800 });
+        else begin();
+      }, 1500);
+    };
+    if (document.readyState === "complete") later();
+    else window.addEventListener("load", later, { once: true });
+    return () => {
+      window.removeEventListener("load", later);
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      v.removeEventListener("playing", onPlaying);
+    };
+  }, []);
+
+  const seen = still ? order.length : started ? order.filter((d) => d.firstS <= t + 0.04).length : 0;
   const done = seen === order.length;
   return (
     <figure className="overflow-hidden rounded-[28px] bg-surface shadow-[0_1px_0_rgb(12_26_40/0.05),0_40px_90px_-40px_rgb(12_26_40/0.55)] ring-1 ring-[#0c1a28]/8">
@@ -62,18 +105,16 @@ export function HeroReplay() {
         </p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_19rem]">
-        <div className="bg-[#08121c]">
-          <WalkReplay
-            chunks={chunks}
-            dogs={dogs}
-            aspect={hero.width / hero.height}
-            maxVh={0.6}
-            autoPlay={!still}
+        <div className="relative aspect-[16/9] bg-[#08121c]">
+          <video
+            ref={videoRef}
+            className="absolute inset-0 size-full object-cover"
+            poster="/hero/mountain-village-sam.jpg"
+            muted
+            playsInline
             loop
-            controls={false}
-            rounded="rounded-none"
-            poster="/hero/mountain-village.jpg"
-            onTime={setT}
+            preload="none"
+            aria-label="A walk through a mountain village, every dog outlined and numbered by SAM 3.1"
           />
         </div>
         <div className="flex flex-col gap-5 border-t border-line p-6 lg:border-l lg:border-t-0" aria-live="off">
@@ -103,10 +144,7 @@ export function HeroReplay() {
             </ul>
           </div>
           <div className="mt-auto">
-            <div
-              className={`rounded-[16px] px-4 py-3.5 transition-colors duration-500 ${done ? "bg-mark-soft" : "bg-canvas-2"}`}
-              aria-hidden={!done}
-            >
+            <div className={`rounded-[16px] px-4 py-3.5 transition-colors duration-500 ${done ? "bg-mark-soft" : "bg-canvas-2"}`} aria-hidden={!done}>
               <p className="text-[0.8125rem] font-semibold text-ink-2">{done ? "Decision" : "Working"}</p>
               <p className="mt-0.5 font-semibold leading-snug">{done ? `Bring ${doses} doses to reach 70% of these dogs.` : "SAM 3.1 is following every dog."}</p>
             </div>

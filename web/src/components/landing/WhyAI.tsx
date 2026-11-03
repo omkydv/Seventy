@@ -35,7 +35,7 @@ const rows: Row[] = [
         </div>
       </div>
     ),
-    proofCaption: "A municipal ear tag about 25 pixels across, made readable.",
+    proofCaption: "A municipal ear tag about 25 pixels across, made visible.",
   },
   {
     today: "The dogs hardest to see are the ones missed: puppies, dark coats, dogs lying still far away. Missing them makes coverage read about 10% too high.",

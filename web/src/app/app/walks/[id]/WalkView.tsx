@@ -9,7 +9,7 @@ import { bestCrops, convertChunk, extractCrops, probeVideo, trackingSize } from 
 import { api, ensureWorkspace } from "@/lib/client/workspace";
 import { day, duration } from "@/lib/format";
 import type { WalkState } from "@/lib/types";
-import { Pipeline, type LocalStage } from "./Pipeline";
+import { Pipeline, type LocalStage, type Thumb } from "./Pipeline";
 import { Results } from "./Results";
 
 const POLL_MS = 3500;
@@ -20,8 +20,24 @@ export function WalkView({ id }: { id: string }) {
   const [local, setLocal] = useState<LocalStage | null>(null);
   const [needFile, setNeedFile] = useState(false);
   const [workError, setWorkError] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [thumbs, setThumbs] = useState<Thumb[]>([]);
   const working = useRef(false);
   const polling = useRef(false);
+  const seen = useRef({ done: 0, read: 0 });
+
+  // The walk's own video, shown on the processing screen while the models work on it.
+  useEffect(() => {
+    const f = recallFile(id);
+    if (!f) return;
+    const url = URL.createObjectURL(f);
+    const t = window.setTimeout(() => setFileUrl(url), 0);
+    return () => {
+      window.clearTimeout(t);
+      URL.revokeObjectURL(url);
+    };
+  }, [id]);
+  useEffect(() => () => thumbs.forEach((t) => URL.revokeObjectURL(t.url)), [thumbs]);
 
   const load = useCallback(async () => {
     const st = await api<WalkState>(`/api/walks/${id}?media=1`);
@@ -92,6 +108,10 @@ export function WalkView({ id }: { id: string }) {
         setLocal({ kind: "cropping", index: done, total, progress: done / total, chunk: -1 }),
       );
       const best = bestCrops(crops, 3);
+      // The sharpest close-up of each dog, on screen while the rest upload and the reading starts.
+      const firsts = new Map<string, Blob>();
+      for (const c of best) if (!firsts.has(c.dogId)) firsts.set(c.dogId, c.blob);
+      setThumbs([...firsts.entries()].map(([dogId, blob]) => ({ dogId, url: URL.createObjectURL(blob) })));
       const counters = new Map<string, number>();
       const items = best.map((c) => {
         const n = counters.get(c.dogId) ?? 0;
@@ -159,7 +179,12 @@ export function WalkView({ id }: { id: string }) {
       try {
         const next = await api<WalkState>(`/api/walks/${id}/advance`, { method: "POST" });
         setS((prev) => (prev ? { ...prev, ...next, media: prev.media } : prev));
-        if (next.walk.status !== status && ["needs_crops", "review", "done"].includes(next.walk.status)) await load();
+        // New SAM output or new readings bring new media (outlines, ear close-ups): fetch their links.
+        const done = next.chunks.filter((c) => c.status === "done").length;
+        const read = next.dogs.filter((d) => d.mark != null).length;
+        const fresh = done > seen.current.done || read > seen.current.read;
+        seen.current = { done, read };
+        if ((next.walk.status !== status && ["needs_crops", "review", "done"].includes(next.walk.status)) || fresh) await load();
       } catch {
         /* transient; the next poll retries */
       } finally {
@@ -246,7 +271,7 @@ export function WalkView({ id }: { id: string }) {
         </p>
       )}
 
-      {processing ? <Pipeline state={s} local={local} /> : <Results state={s} onChange={setS} />}
+      {processing ? <Pipeline state={s} local={local} fileUrl={fileUrl} thumbs={thumbs} /> : <Results state={s} />}
     </main>
   );
 }

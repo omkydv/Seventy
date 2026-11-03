@@ -51,7 +51,7 @@ describe("classify", () => {
 });
 
 describe("second opinion", () => {
-  it("sends a dog to a person when SAM and Muse Spark disagree about a collar", () => {
+  it("calls a dog can't tell when SAM and Muse Spark disagree about a collar", () => {
     const r = reading({ collar: { status: "present", color: "red" }, second: { collar: { found: false, conf: null } } });
     expect(classify(r, "vaccination", ["collar"]).status).toBe("unknown");
   });

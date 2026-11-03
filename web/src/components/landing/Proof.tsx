@@ -14,17 +14,17 @@ export function Proof() {
   const cost = data.samples.reduce((n, s) => n + s.cost, 0);
   const t = check.total;
   const stats: [string, string][] = [
-    [`${seventy} / ${hand}`, "Dogs found and counted once across the four walks, matching a careful hand count dog for dog."],
+    [`${seventy} / ${hand}`, "Dogs found and counted once across the four videos, matching a careful hand count dog for dog."],
     [`${Math.round(t.precision * 100)}%`, `Of SAM 3.1’s boxes were on a real dog, across ${t.frames} frames checked one dog at a time. Not one false alarm.`],
-    ["1", "Ear tag on a distant dog, about 25 pixels across, made readable by SAM 3.1’s enlarged close-up of the ear."],
-    [`$${cost.toFixed(2)}`, "Model cost for all four walks: tracking, blurring, ear zoom, readings, second opinions and repeat checks."],
+    ["1", "Ear tag on a distant dog, about 25 pixels across, made visible by SAM 3.1’s enlarged close-up of the ear."],
+    [`$${cost.toFixed(2)}`, "Model cost for all four videos: tracking, blurring, ear zoom, readings, second opinions and repeat checks."],
   ];
   return (
     <section id="proof" className="scroll-mt-6 bg-surface py-28 md:py-40">
       <div className="shell">
         <div className="grid grid-cols-12 gap-y-8 lg:gap-x-8">
           <h2 className="display col-span-12 text-[2rem] sm:text-4xl md:text-[4.25rem] md:leading-[1.02] lg:col-span-6">
-            Four real walks, checked by hand.
+            Four real street videos, checked by hand.
           </h2>
           <p className="lede col-span-12 self-end lg:col-span-6">
             A mountain village, a seaside town, a city market and a village lane. A person counted every dog without looking at Seventy’s answer, then

@@ -9,7 +9,7 @@ import { clock } from "@/lib/format";
 
 export type ReplayChunk = { idx: number; startS: number; video: string; sam: string; people?: string | null };
 export type ReplayDog = { label: number; status: string; segments: { chunk: number; objectId: string }[] };
-export type ReplayHandle = { seek: (walkSeconds: number) => void };
+export type ReplayHandle = { seek: (walkSeconds: number) => void; play: () => Promise<void> };
 
 /** Overlay colour per reading, and the label text drawn on it. */
 const COLOR: Record<string, { fill: string; text: string }> = {
@@ -104,6 +104,8 @@ type Props = {
   rounded?: string;
   /** A still of the first frame, shown until the video can draw. */
   poster?: string;
+  /** Called once the first piece can play. */
+  onReady?: () => void;
   ref?: Ref<ReplayHandle>;
 };
 
@@ -121,6 +123,7 @@ export function WalkReplay({
   controls = true,
   rounded = "rounded-[24px]",
   poster,
+  onReady,
   ref,
 }: Props) {
   const outerRef = useRef<HTMLDivElement>(null);
@@ -136,6 +139,10 @@ export function WalkReplay({
   const selectedRef = useRef<number | null>(selected);
   const pendingSeekRef = useRef<number | null>(null);
   const onTimeRef = useRef(onTime);
+  const onReadyRef = useRef(onReady);
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
   const dprRef = useRef(1);
   const openedRef = useRef(false);
   const [active, setActive] = useState(chunks[0]?.idx ?? 0);
@@ -173,6 +180,9 @@ export function WalkReplay({
       } else {
         playerRef.current?.seek(Math.max(0, walkSeconds - target.startS)).catch(() => {});
       }
+    },
+    async play() {
+      await playerRef.current?.play().catch(() => {});
     },
   }));
 
@@ -382,6 +392,7 @@ export function WalkReplay({
           pendingSeekRef.current = null;
         }
         setReady(true);
+        onReadyRef.current?.();
         setTime(0);
         if (autoPlay) await player.play().catch(() => {});
       } catch (e) {

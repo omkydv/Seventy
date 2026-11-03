@@ -5,14 +5,15 @@ import { CoverageMeter } from "@/components/CoverageMeter";
 import { DogGlyph, type GlyphStatus } from "@/components/DogGlyph";
 import { DogTimeline } from "@/components/DogTimeline";
 import { WalkReplay, type ReplayHandle } from "@/components/WalkReplay";
-import { api } from "@/lib/client/workspace";
 import { clock, plural } from "@/lib/format";
 import { disagrees, MARK_NAMES, type VaccinationMark } from "@/lib/marks";
 import { TARGET, walkStats } from "@/lib/stats";
 import { effectiveStatus, type Dog, type UsageRow, type WalkState, type WalkStats } from "@/lib/types";
+import { GoBack } from "./GoBack";
 import { ReportPanel } from "./ReportPanel";
 
 const STATUS_TEXT: Record<string, string> = {
+  counted: "Counted",
   marked: "Marked",
   unmarked: "Not marked",
   unknown: "Can’t tell",
@@ -33,6 +34,7 @@ const shownStatus = (d: Dog, mode: string) => {
 };
 
 const CHIP_TONE: Record<string, string> = {
+  counted: "bg-canvas-2",
   marked: "bg-mark-soft",
   unmarked: "bg-canvas-2",
   unknown: "shadow-[inset_0_0_0_1px_var(--line-strong)]",
@@ -103,15 +105,18 @@ function markLine(d: Dog, target: string, markTypes: string[]): string {
 function secondLines(d: Dog): { text: string; split: boolean }[] {
   const second = d.mark?.second;
   if (!second || !d.mark) return [];
+  const s = effectiveStatus(d);
   return (["collar", "ear_tag"] as const)
     .filter((k) => second[k])
     // Once a dog's status is settled, an old disagreement is no longer news.
-    .filter((k) => !disagrees(d.mark!, k) || effectiveStatus(d) === "unknown")
+    .filter((k) => !disagrees(d.mark!, k) || s === "unknown")
+    // A mark too small for SAM's search (a 25-pixel tag) doesn't unsettle a dog already read as marked.
+    .filter((k) => !(s === "marked" && !second[k]!.found))
     .map((k) => {
       const split = disagrees(d.mark!, k);
       return {
         split,
-        text: `SAM 3.1 also looked for ${k === "collar" ? "a collar" : "an ear tag"} and ${second[k]!.found ? "found one" : "found none"}.${split ? " The two models disagree, so a person decides." : ""}`,
+        text: `SAM 3.1 also looked for ${k === "collar" ? "a collar" : "an ear tag"} and ${second[k]!.found ? "found one" : "found none"}.`,
       };
     });
 }
@@ -290,36 +295,11 @@ function SurveyPlayer({
   );
 }
 
-function DogCard({
-  d,
-  crop,
-  ears,
-  target,
-  markTypes,
-  canReview,
-  busy,
-  selected,
-  repeatOf,
-  repeatReason,
-  onReview,
-  onShow,
-}: {
-  d: Dog;
-  crop?: string;
-  ears: string[];
-  target: string;
-  markTypes: string[];
-  canReview: boolean;
-  busy: boolean;
-  selected: boolean;
-  repeatOf: number | null;
-  repeatReason: string | null;
-  onReview: (status: string) => void;
-  onShow: () => void;
-}) {
+function DogCard({ d, crop, ears, target, markTypes, mode, selected, onShow }: { d: Dog; crop?: string; ears: string[]; target: string; markTypes: string[]; mode: string; selected: boolean; onShow: () => void }) {
   const s = effectiveStatus(d);
+  // Before a drive the card answers "counted"; a mark already there is still worth saying.
+  const chip = mode === "plan" ? (s === "marked" ? "marked" : s === "duplicate" ? s : "counted") : s;
   const facts = [d.mark?.lead?.status === "present" ? "On a lead" : null, d.mark?.life_stage === "puppy" ? "Puppy" : null].filter(Boolean) as string[];
-  const askRepeat = repeatOf != null && !d.review_status;
   return (
     <li id={`dog-${d.label}`} className={`panel scroll-mt-24 overflow-hidden transition-shadow ${selected ? "ring-2 ring-focus/50" : ""}`}>
       <div className="relative aspect-[4/3] bg-canvas-2">
@@ -345,7 +325,7 @@ function DogCard({
           <button type="button" onClick={onShow} className="text-lg font-semibold tracking-[-0.01em] hover:text-ink-2" title="Show this dog in the video">
             Dog {d.label}
           </button>
-          <StatusChip status={s} />
+          <StatusChip status={chip} />
         </div>
         {facts.length > 0 && (
           <p className="mt-2 flex flex-wrap gap-1.5">
@@ -368,48 +348,10 @@ function DogCard({
             {l.text}
           </p>
         ))}
-        {d.review_note && (
-          <p className="mt-3 rounded-[12px] bg-mark-soft px-3 py-2 text-[0.875rem] text-ink">
-            <span className="font-semibold">Checked by a person.</span> {d.review_note.replace(/\s*Checked by a person\.?$/, "")}
-          </p>
-        )}
         {d.same_as != null && <p className="mt-3 text-[0.875rem] text-ink-3">The same dog as Dog {d.same_as}, so it is counted once.</p>}
-        {askRepeat && (
-          <div className="mt-3 rounded-[12px] bg-canvas px-3 py-2.5 text-[0.875rem]">
-            <p>
-              <span className="font-semibold">Might be Dog {repeatOf} again.</span> <span className="text-ink-2">{repeatReason}</span>
-            </p>
-            {canReview && (
-              <div className="mt-2 flex gap-2">
-                <button type="button" disabled={busy} onClick={() => onReview("duplicate")} className="btn btn-secondary btn-sm h-8">
-                  Same dog
-                </button>
-                <button type="button" disabled={busy} onClick={() => onReview(d.mark_status ?? "unknown")} className="btn btn-secondary btn-sm h-8">
-                  Different dogs
-                </button>
-              </div>
-            )}
-          </div>
-        )}
         <p className="num mt-3 text-[0.8125rem] text-ink-3">
           Seen {clock(d.first_s)} to {clock(d.last_s)}
         </p>
-        {canReview && d.same_as == null && (
-          <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-[12px] bg-canvas p-1" role="group" aria-label={`Your call on dog ${d.label}`}>
-            {(["marked", "unmarked", "unknown"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                disabled={busy}
-                aria-pressed={s === v}
-                onClick={() => onReview(v)}
-                className={`h-9 rounded-[9px] text-[0.8125rem] font-semibold transition-colors ${s === v ? "bg-surface text-ink shadow-[0_1px_2px_rgb(var(--shadow)/0.15)]" : "text-ink-2 hover:text-ink"}`}
-              >
-                {STATUS_TEXT[v]}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </li>
   );
@@ -481,43 +423,19 @@ function UsagePanel({ usage, walk }: { usage: UsageRow[]; walk: WalkState["walk"
   );
 }
 
-export function Results({ state, onChange }: { state: WalkState; onChange: (s: WalkState) => void }) {
-  const [busy, setBusy] = useState<string | null>(null);
+export function Results({ state }: { state: WalkState }) {
   const [filter, setFilter] = useState<"all" | "unknown">("all");
   const [selected, setSelected] = useState<number | null>(null);
-  // On a sample survey anyone can try the review; their calls stay in this browser.
-  const [local, setLocal] = useState<Record<string, string>>({});
   const replayRef = useRef<ReplayHandle | null>(null);
   const target = state.walk.target_mark;
   const markTypes = state.walk.mark_types ?? [];
   const crops = state.media?.crops ?? {};
   const ears = state.media?.ears ?? {};
-
-  const dogs = useMemo(() => state.dogs.map((d) => (local[d.id] ? { ...d, review_status: local[d.id] } : d)), [state.dogs, local]);
-  const stats = useMemo(
-    () => (Object.keys(local).length ? (walkStats(dogs, target) as WalkStats) : state.walk.stats),
-    [dogs, local, target, state.walk.stats],
-  );
-  const labelOf = useMemo(() => new Map(state.dogs.map((d) => [d.id, d.label])), [state.dogs]);
-  const repeatFor = useMemo(() => new Map((state.repeats ?? []).map((r) => [r.dog_b, r])), [state.repeats]);
+  const dogs = state.dogs;
+  // Walks finished before the stats were stored get them worked out here.
+  const stats = useMemo(() => state.walk.stats ?? (walkStats(dogs, target) as WalkStats), [state.walk.stats, dogs, target]);
   const unknown = dogs.filter((d) => effectiveStatus(d) === "unknown");
   const shown = filter === "unknown" ? unknown : dogs;
-  const canReview = state.owner || state.walk.mode === "check" || Boolean(state.repeats?.length);
-  const tried = Object.keys(local).length > 0;
-
-  async function review(dogId: string, status: string) {
-    if (!state.owner) {
-      setLocal((l) => ({ ...l, [dogId]: status }));
-      return;
-    }
-    setBusy(dogId);
-    try {
-      const next = await api<WalkState>(`/api/walks/${state.walk.id}/dogs/${dogId}`, { method: "PATCH", json: { status } });
-      onChange({ ...state, ...next, media: state.media, owner: state.owner });
-    } finally {
-      setBusy(null);
-    }
-  }
 
   function show(label: number) {
     setSelected(label);
@@ -537,55 +455,39 @@ export function Results({ state, onChange }: { state: WalkState; onChange: (s: W
         </aside>
       </div>
 
+      <GoBack walk={state.walk} dogs={dogs} selected={selected} onShow={show} />
+
       {unknown.length > 0 && state.walk.mode === "check" && (
         <div className="mt-10 flex flex-col gap-3 rounded-[18px] bg-surface px-6 py-5 shadow-[inset_0_0_0_1px_var(--line-strong)] sm:flex-row sm:items-center sm:justify-between">
           <p>
             <span className="font-semibold">{plural(unknown.length, "dog")} too far away to read.</span>{" "}
-            <span className="text-ink-2">
-              Seventy keeps them out of the coverage instead of guessing. Open their close-ups to settle any you can.
-              {!state.owner ? " This is a sample survey: try it, and your choices stay in this browser." : ""}
-            </span>
+            <span className="text-ink-2">Seventy leaves them out of the coverage instead of guessing, so the percentage is never inflated.</span>
           </p>
           <button type="button" onClick={() => setFilter(filter === "unknown" ? "all" : "unknown")} className="btn btn-secondary btn-sm shrink-0">
             {filter === "unknown" ? "Show every dog" : "Show them"}
           </button>
         </div>
       )}
-      {tried && (
-        <p className="mt-4 text-[0.9375rem] text-ink-2">
-          Your review changed the numbers above.{" "}
-          <button type="button" className="link font-medium" onClick={() => setLocal({})}>
-            Put the model’s readings back
-          </button>
-        </p>
-      )}
 
       <section className="mt-14">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-xl font-semibold tracking-[-0.01em]">{filter === "unknown" ? "Dogs to review" : "Every dog, once"}</h2>
+          <h2 className="text-xl font-semibold tracking-[-0.01em]">{filter === "unknown" ? "Too far away to read" : "Every dog, once"}</h2>
           <p className="num text-[0.9375rem] text-ink-3">{plural(shown.length, "dog")}</p>
         </div>
-        <ul className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy={busy != null}>
-          {shown.map((d) => {
-            const r = repeatFor.get(d.id);
-            return (
-              <DogCard
-                key={d.id}
-                d={d}
-                crop={crops[d.id]?.[0]}
-                ears={ears[d.id] ?? []}
-                target={target}
-                markTypes={markTypes}
-                canReview={canReview}
-                busy={busy === d.id}
-                selected={selected === d.label}
-                repeatOf={r ? (labelOf.get(r.dog_a) ?? null) : null}
-                repeatReason={r?.reason ?? null}
-                onReview={(st) => review(d.id, st)}
-                onShow={() => show(d.label)}
-              />
-            );
-          })}
+        <ul className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((d) => (
+            <DogCard
+              key={d.id}
+              d={d}
+              crop={crops[d.id]?.[0]}
+              ears={ears[d.id] ?? []}
+              target={target}
+              markTypes={markTypes}
+              mode={state.walk.mode}
+              selected={selected === d.label}
+              onShow={() => show(d.label)}
+            />
+          ))}
         </ul>
       </section>
       <UsagePanel usage={state.usage ?? []} walk={state.walk} />

@@ -15,6 +15,29 @@ function Squares({ total, filled, size = 14, columns }: { total: number; filled:
   );
 }
 
+const next: { title: string; items: string[] }[] = [
+  {
+    title: "In the field",
+    items: ["Upload later, when the signal comes back.", "The app in the languages surveyors speak."],
+  },
+  {
+    title: "For programmes",
+    items: [
+      "Team accounts: a manager’s laptop and five surveyors’ phones on one programme.",
+      "Every area’s latest coverage on one district map.",
+      "Two walks of one route, matched dog by dog, for a population estimate.",
+      "Export to the tools campaigns already use.",
+    ],
+  },
+  {
+    title: "For trust",
+    items: [
+      "A field trial next to a standard survey, on the same streets, published in full.",
+      "The second opinion extended from collars and ear tags to paint and ear notches.",
+    ],
+  },
+];
+
 const rings = [
   {
     title: "One surveyor, one morning",
@@ -65,6 +88,28 @@ export function Possible() {
             </li>
           ))}
         </ol>
+
+        <div className="mt-20 border-t border-line pt-14">
+          <h3 className="display-quiet text-2xl md:text-3xl">What we build next</h3>
+          <div className="mt-8 grid grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-3">
+            {next.map((g) => (
+              <div key={g.title}>
+                <h4 className="font-semibold">{g.title}</h4>
+                <ul className="mt-4 space-y-3 text-ink-2">
+                  {g.items.map((i) => (
+                    <li key={i} className="grid grid-cols-[1.25rem_1fr]">
+                      <span aria-hidden className="mt-[0.6em] block size-1.5 rounded-full bg-ink-3" />
+                      <span>{i}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="mt-16 max-w-3xl text-2xl font-semibold leading-snug tracking-[-0.015em] md:text-3xl" style={{ fontStretch: "106%" }}>
+            Every dog counted once. Every number you can check. After every drive.
+          </p>
+        </div>
       </div>
     </section>
   );

@@ -25,6 +25,8 @@ export type Walk = {
   recorded_at: string | null;
   created_at: string;
   stats: WalkStats | null;
+  /** Recorded in Seventy: where the phone was, [seconds into the video, lat, lon, accuracy in metres] per fix. */
+  route?: { points: [number, number, number, number][] } | null;
 };
 
 export type Chunk = {

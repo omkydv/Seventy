@@ -27,6 +27,7 @@ export type WalkInput = {
   sourceName?: string;
   procFps?: number;
   chunkSeconds?: number;
+  route?: { points: [number, number, number, number][] } | null;
 };
 
 const OVERLAP_S = 2;
@@ -86,6 +87,7 @@ export async function createWalk(ws: Workspace, input: WalkInput) {
       src_fps: input.srcFps ?? null,
       source_name: input.sourceName ?? null,
       proc_fps: procFps,
+      route: input.route?.points?.length ? { points: input.route.points } : null,
       chunk_seconds: input.chunkSeconds ?? 30,
       overlap_seconds: OVERLAP_S,
       status: "uploading",
@@ -335,7 +337,7 @@ async function readNextDogs(walkId: string, walk: Record<string, unknown>) {
       }
       try {
         const { value, usage, ms } = await readMarks(urls, earUrls);
-        // Second opinion: SAM 3.1 looks for the mark itself. If the two models disagree, a person decides.
+        // Second opinion: SAM 3.1 looks for the mark itself. If the two models disagree, the dog is can't tell.
         const types = ((walk.mark_types as string[]) ?? []).filter((k): k is "collar" | "ear_tag" => k === "collar" || k === "ear_tag");
         if (walk.target_mark !== "sterilization" && types.length) {
           const second: NonNullable<MarkReading["second"]> = {};
@@ -398,6 +400,36 @@ export async function reviewDog(walkId: string, dogId: string, status: string) {
   await finish(walkId, String(walk?.target_mark ?? "vaccination"));
 }
 
+/**
+ * Remove a walk for good: its files in storage (pieces, SAM output, close-ups) and its rows.
+ * Chunks, dogs and usage go with the walk row by cascade.
+ */
+export async function deleteWalk(walkId: string) {
+  if (isSample(walkId)) throw new UserError("Sample surveys can’t be deleted.");
+  const bucket = db().storage.from("walks");
+  const files: string[] = [];
+  const walkDir = async (dir: string) => {
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await bucket.list(dir, { limit: 1000, offset });
+      if (error) throw new Error(`Listing ${dir} failed: ${error.message}`);
+      for (const f of data ?? []) {
+        // Folders come back without an id.
+        if (f.id) files.push(`${dir}/${f.name}`);
+        else await walkDir(`${dir}/${f.name}`);
+      }
+      if (!data || data.length < 1000) break;
+    }
+  };
+  await walkDir(walkId);
+  for (let i = 0; i < files.length; i += 500) {
+    const { error } = await bucket.remove(files.slice(i, i + 500));
+    if (error) throw new Error(`Removing files failed: ${error.message}`);
+  }
+  const { error } = await db().from("walks").delete().eq("id", walkId);
+  if (error) throw new Error(`Deleting the walk failed: ${error.message}`);
+  return { files: files.length };
+}
+
 export async function state(walkId: string) {
   const [{ data: walk }, { data: chunks }, { data: dogs }, { data: usage }] = await Promise.all([
     db().from("walks").select("*").eq("id", walkId).single(),
@@ -409,7 +441,7 @@ export async function state(walkId: string) {
       .order("label"),
     db().from("usage_log").select("stage, model, units, unit, calls, seconds, cost_usd").eq("walk_id", walkId).order("id"),
   ]);
-  // Possible repeats a model couldn't settle, for a person to decide.
+  // Possible repeats a model couldn't settle; both dogs stay counted.
   const ids = (dogs ?? []).map((d) => d.id as string);
   const { data: matches } = ids.length
     ? await db().from("matches").select("dog_a, dog_b, verdict, reason").in("dog_b", ids)

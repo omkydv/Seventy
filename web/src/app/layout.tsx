@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Mona_Sans } from "next/font/google";
+import { DESCRIPTION, SITE, TITLE } from "@/lib/site";
 import "./globals.css";
 
 const mona = Mona_Sans({
@@ -10,18 +11,33 @@ const mona = Mona_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3070"),
-  title: {
-    default: "Seventy: know when a street is safe from rabies",
-    template: "%s | Seventy",
-  },
-  description:
-    "Film a ten-minute walk. Seventy counts every dog once, reads each vaccination mark, and tells a vaccination team whether the area has reached the 70% that stops rabies.",
+  metadataBase: new URL(SITE),
+  title: { default: TITLE, template: "%s | Seventy" },
+  description: DESCRIPTION,
+  applicationName: "Seventy",
+  keywords: [
+    "rabies",
+    "dog vaccination coverage",
+    "post-vaccination survey",
+    "mass dog vaccination",
+    "Zero by 30",
+    "street dog count",
+    "dog population survey",
+    "SAM 3.1",
+    "Muse Spark",
+    "Meta AI",
+  ],
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Seventy",
-    description: "Know when a street is safe from rabies. Count every dog once, read every vaccination mark, measure coverage against the 70% line.",
-    images: ["/og.jpg"],
+    type: "website",
+    siteName: "Seventy",
+    url: "/",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Seventy: Rabies hides in the dogs a drive missed. Seventy finds them." }],
   },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: ["/og.jpg"] },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -30,9 +46,11 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Browser extensions (grammar checkers, dark-mode tools) add attributes to <html> and <body>
+  // before React loads; without this every refresh in development reports a hydration mismatch.
   return (
-    <html lang="en" className={mona.variable}>
-      <body>{children}</body>
+    <html lang="en" className={mona.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

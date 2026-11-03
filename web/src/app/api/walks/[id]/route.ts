@@ -1,7 +1,7 @@
-import { canReadWalk, workspaceFrom } from "@/lib/server/auth";
+import { canReadWalk, ownsWalk, workspaceFrom } from "@/lib/server/auth";
 import { fail, handle, json, jsonShared } from "@/lib/server/http";
 import { isSample } from "@/lib/server/samples";
-import { collectPeople, mediaUrls, state } from "@/lib/server/walks";
+import { collectPeople, deleteWalk, mediaUrls, state } from "@/lib/server/walks";
 
 export const runtime = "nodejs";
 
@@ -21,4 +21,13 @@ export const GET = handle(async (req: Request, ctx: { params: Promise<{ id: stri
   const media = withMedia ? await mediaUrls(id, s) : null;
   const owner = Boolean(ws && s.walk && ws.id === s.walk.workspace_id);
   return json({ ...s, media, owner });
+});
+
+/** Delete one of your own surveys, with its files. Samples belong to everyone and stay. */
+export const DELETE = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
+  const { id } = await ctx.params;
+  if (isSample(id)) return fail("Sample surveys can’t be deleted.", 403);
+  const ws = await workspaceFrom(req);
+  if (!ws || ws.isDemo || !(await ownsWalk(id, ws))) return fail("That walk doesn’t exist, or it belongs to another workspace.", 404);
+  return json({ deleted: id, ...(await deleteWalk(id)) });
 });

@@ -100,7 +100,7 @@ export function Evidence() {
             </svg>
             <p>
               <span className="text-lg font-semibold">A decision</span>
-              <span className="ml-3 text-white/85">Coverage with a 95% interval, the doses to bring, and the stretch of the walk to go back to.</span>
+              <span className="ml-3 text-white/85">Coverage with a 95% interval, the doses to bring, and a map of the places to go back to.</span>
             </p>
           </div>
         </div>

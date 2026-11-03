@@ -157,14 +157,21 @@ export async function extractCrops(
       const bw = (r - l) * W;
       const bh = (b - t) * H;
       const pad = 0.14;
-      const x0 = Math.max(0, Math.floor(l * W - bw * pad));
-      const y0 = Math.max(0, Math.floor(t * H - bh * pad));
-      const x1 = Math.min(W, Math.ceil(r * W + bw * pad));
-      const y1 = Math.min(H, Math.ceil(b * H + bh * pad));
+      // A dog far up the street can be a dozen pixels wide: keep at least 72 px of picture around it.
+      const MIN = 72;
+      const cx = ((l + r) / 2) * W;
+      const cy = ((t + b) / 2) * H;
+      const hw = Math.max((bw * (1 + 2 * pad)) / 2, MIN / 2);
+      const hh = Math.max((bh * (1 + 2 * pad)) / 2, MIN / 2);
+      const x0 = Math.max(0, Math.floor(cx - hw));
+      const y0 = Math.max(0, Math.floor(cy - hh));
+      const x1 = Math.min(W, Math.ceil(cx + hw));
+      const y1 = Math.min(H, Math.ceil(cy + hh));
       const cw = x1 - x0;
       const ch = y1 - y0;
-      if (cw < 24 || ch < 24) continue;
-      const scale = Math.min(1, 1024 / Math.max(cw, ch));
+      if (cw < 8 || ch < 8) continue;
+      // Small crops are enlarged so the reading and the card both get a usable picture.
+      const scale = Math.min(Math.max(1, 256 / Math.max(cw, ch)), 1024 / Math.max(cw, ch));
       const out = new OffscreenCanvas(Math.round(cw * scale), Math.round(ch * scale));
       const octx = out.getContext("2d")!;
       octx.imageSmoothingQuality = "high";

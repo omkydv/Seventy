@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { preload } from "react-dom";
 import data from "@/content/samples.json";
 import { LandingHeader } from "./Brand";
 import { HeroReplay } from "./HeroReplay";
@@ -9,8 +8,6 @@ import { HeroReplay } from "./HeroReplay";
  * need is real and paid for; under it, the product doing the work on a real walk.
  */
 export function Hero() {
-  // The replay needs SAM's output before it can draw; start fetching it with the page.
-  preload("/hero/mountain-village.dogs.txt", { as: "fetch", crossOrigin: "anonymous" });
   const hand = data.samples.reduce((n, s) => n + s.hand, 0);
   const found = data.samples.reduce((n, s) => n + s.seventy, 0);
   return (
@@ -36,7 +33,7 @@ export function Hero() {
           <div className="lg:col-span-7">
             <p className="lede max-w-[36rem] text-[#24364a]">
               Seventy counts every dog on a phone video, reads each vaccination mark with Meta’s AI, and tells the team whether the street reached the 70%
-              that stops rabies.
+              that stops rabies, and where the dogs still to vaccinate are.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/app/demo" className="btn btn-primary">
@@ -76,9 +73,9 @@ export function Hero() {
           <HeroReplay />
         </div>
         <p className="mt-4 text-center text-[0.9375rem] text-[#3d4f63]">
-          Real SAM 3.1 output on a 20-second walk, drawn live in your browser.{" "}
+          Real SAM 3.1 output on a 20-second walk, drawn by Seventy’s replay.{" "}
           <a href="#proof" className="link font-semibold text-[#0c1a28]">
-            {found} of {hand} dogs found in hand-checked walks.
+            {found} of {hand} dogs found in hand-checked videos.
           </a>
         </p>
       </div>
