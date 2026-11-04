@@ -31,12 +31,13 @@ export function FinalCta() {
 
 const sources: [string, string][] = [
   ["WHO: rabies fact sheet (2026)", "https://www.who.int/news-room/fact-sheets/detail/rabies"],
+  ["WHO South-East Asia: rabies, and 70% dog vaccination coverage", "https://www.who.int/southeastasia/health-topics/rabies"],
   ["WHO: Zero by 30, the global plan to end dog-mediated rabies", "https://www.who.int/publications/m/item/zero-by-30-the-global-strategic-plan-to-prevent-humandeaths-from-dog-transmitted-rabies-by-2030"],
   ["Three ways to measure one campaign’s coverage (Frontiers in Microbiology, 2025)", "https://www.frontiersin.org/journals/microbiology/articles/10.3389/fmicb.2025.1696281/full"],
   ["Comparing coverage surveys, and the puppies transects miss (Frontiers in Veterinary Science, 2017)", "https://www.frontiersin.org/journals/veterinary-science/articles/10.3389/fvets.2017.00033/full"],
   ["Vaccinate–assess–move: mass dog vaccination with mobile data collection (BMC Infectious Diseases)", "https://bmcinfectdis.biomedcentral.com/articles/10.1186/s12879-015-1320-2"],
   ["A 2026 dog vaccination campaign and its post-vaccination survey (PLOS Neglected Tropical Diseases)", "https://journals.plos.org/plosntds/article?id=10.1371%2Fjournal.pntd.0014143"],
-  ["Short-term marking of dogs for rabies control (Bothma et al.)", "https://pubmed.ncbi.nlm.nih.gov/26092723/"],
+  ["Evaluation of methods for short-term marking of dogs for rabies control (Conan et al., 2015)", "https://pubmed.ncbi.nlm.nih.gov/26092723/"],
   ["Mark–resight surveys of roaming dogs (BMC Veterinary Research)", "https://link.springer.com/article/10.1186/1746-6148-7-46"],
   ["United Against Rabies: dog population estimation methods (2026)", "https://unitedagainstrabies.org/app/uploads/2026/04/2026_UAR_DogPopulationEstimationMethodologies_V2_Apr2026_EN.pdf"],
 ];

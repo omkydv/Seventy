@@ -21,8 +21,8 @@ const rows: Row[] = [
     proofCaption: "A pack of 13 crossing a village square. 13 counted, each once.",
   },
   {
-    today: "Vaccination marks are small, fade within weeks, and hide on dark coats. Two observers agree on a mark’s colour barely better than chance.",
-    todaySource: { label: "Bothma et al.", href: "https://pubmed.ncbi.nlm.nih.gov/26092723/" },
+    today: "Vaccination marks are small, fade within weeks, and hide on dark coats. Mark colours were often misread, and agreement between observers on them was low (kappa 0.27).",
+    todaySource: { label: "Conan et al., 2015", href: "https://pubmed.ncbi.nlm.nih.gov/26092723/" },
     fix: "SAM 3.1 finds each dog’s ears and enlarges them. Muse Spark reads paint, collars, tags and notches the same way every time. For collars and tags, a second look by SAM 3.1 has to agree.",
     models: ["SAM 3.1", "Muse Spark"],
     proof: (

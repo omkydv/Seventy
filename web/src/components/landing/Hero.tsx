@@ -1,5 +1,6 @@
 import Link from "next/link";
 import data from "@/content/samples.json";
+import { FILM_URL } from "@/lib/site";
 import { LandingHeader } from "./Brand";
 import { HeroReplay } from "./HeroReplay";
 
@@ -42,6 +43,11 @@ export function Hero() {
               <Link href="/app/new" className="btn btn-light">
                 Try it now
               </Link>
+              {FILM_URL && (
+                <a href={FILM_URL} className="btn btn-light">
+                  Watch the film
+                </a>
+              )}
             </div>
           </div>
 
@@ -59,7 +65,7 @@ export function Hero() {
             </p>
             <div className="mt-3 grid grid-cols-1 items-center gap-x-4 gap-y-1 rounded-[16px] sm:grid-cols-[8.25rem_1fr] bg-[#e7eef3] px-4 py-3">
               <p className="display num text-[1.75rem] leading-none text-[#0c1a28]">$99,000</p>
-              <p className="text-[0.9375rem] leading-snug text-[#24364a]">San Antonio’s AI count of its street dogs, one city, filmed from city vehicles.</p>
+              <p className="text-[0.9375rem] leading-snug text-[#24364a]">San Antonio’s AI count of its street dogs, one city, filmed from vehicles.</p>
             </div>
             <div className="mt-2 grid grid-cols-1 items-center gap-x-4 gap-y-1 rounded-[16px] sm:grid-cols-[8.25rem_1fr] bg-mark-soft px-4 py-3">
               <p className="display num text-[1.75rem] leading-none text-mark-strong">$2</p>
