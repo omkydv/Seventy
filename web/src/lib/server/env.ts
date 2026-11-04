@@ -19,6 +19,10 @@ export const env = {
   get supabaseSecret() {
     return required("SUPABASE_SECRET_KEY");
   },
+  /** All visitors together, per day, so a busy day can't use up the API credit. */
+  get overallCapUsd() {
+    return Number(process.env.OVERALL_DAILY_CAP_USD ?? "15");
+  },
   get dailyCapUsd() {
     return Number(process.env.DAILY_SPEND_CAP_USD ?? "4");
   },

@@ -11,6 +11,7 @@ import { checkRepeats } from "./repeats";
 import { checkJob, compactTracks, samVideoCost, submitVideoJob, type ChunkTracks } from "./sam";
 import type { Workspace } from "./auth";
 import { env } from "./env";
+import { LOCAL } from "./local";
 
 export type WalkInput = {
   mode: "plan" | "check";
@@ -60,15 +61,37 @@ export async function spentToday(workspaceId: string): Promise<number> {
   return (data ?? []).reduce((s, r) => s + Number(r.cost_usd ?? 0), 0);
 }
 
+/** What every visitor together has spent in the last day. */
+async function spentByEveryone(): Promise<number> {
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  let total = 0;
+  for (let from = 0; from < 40000; from += 1000) {
+    const { data } = await db().from("usage_log").select("cost_usd").gte("created_at", since).range(from, from + 999);
+    total += (data ?? []).reduce((s, r) => s + Number(r.cost_usd ?? 0), 0);
+    if (!data || data.length < 1000) break;
+  }
+  return total;
+}
+
+/** Stops new model work once a workspace, or the public site as a whole, has used today's budget. */
+export async function checkBudget(ws: Workspace, estimate: number) {
+  if (ws.isDemo) return;
+  if ((await spentToday(ws.id)) + estimate > env.dailyCapUsd) {
+    throw new UserError("This workspace has used today’s processing allowance. Try again tomorrow, or open a sample survey.");
+  }
+  // In local mode the key and the limit are the user's own.
+  if (!LOCAL && (await spentByEveryone()) + estimate > env.overallCapUsd) {
+    throw new UserError("Seventy’s shared model budget for today is used up. Open a finished survey, or run it with your own key: github.com/omkydv/Seventy.");
+  }
+}
+
 export async function createWalk(ws: Workspace, input: WalkInput) {
   if (!(input.durationS > 0)) throw new UserError("That video has no length. Try exporting it again.");
   if (input.durationS > 20 * 60) throw new UserError("Walks can be up to 20 minutes. Split longer recordings.");
   const procFps = input.procFps ?? 5;
   // Dogs and people are tracked as two jobs over the same frames (pieces overlap by 2 s in 30); readings and the report add about 60 cents.
   const estimate = 2 * samVideoCost(input.durationS * procFps * 1.07) + 0.6;
-  if (!ws.isDemo && (await spentToday(ws.id)) + estimate > env.dailyCapUsd) {
-    throw new UserError("This workspace has used today’s processing allowance. Try again tomorrow, or open a sample survey.");
-  }
+  await checkBudget(ws, estimate);
 
   const { data: walk, error } = await db()
     .from("walks")
