@@ -195,6 +195,15 @@ export function WalkList() {
             </li>
           ))}
         </ul>
+        <Link href={`/app/walks/${fieldSamples.filmWalk}`} className="group panel mt-5 flex flex-col gap-1 p-5 md:flex-row md:items-center md:justify-between md:gap-6">
+          <span>
+            <span className="block font-semibold tracking-[-0.01em] group-hover:underline">The walk from the film: coverage, the map and the report</span>
+            <span className="mt-0.5 block text-[0.9375rem] text-ink-2">One minute of stock footage fed to the recorder, with a simulated GPS route. Every count, reading, report and cost is real model output.</span>
+          </span>
+          <span className="num shrink-0 text-[0.9375rem] text-ink-2">
+            <span className="font-semibold text-ink">14</span> dogs, 30% coverage
+          </span>
+        </Link>
       </section>
       {/* Without surveys of its own, a visitor starts from the samples, then their own walk. */}
       {!data.mine.length && (
@@ -203,14 +212,14 @@ export function WalkList() {
             <h2 id="start" className="text-xl font-semibold tracking-[-0.01em]">
               Count your own walk
             </h2>
-            <p className="mt-1 text-ink-2">Record a walk in Seventy, upload a phone video, or run the whole pipeline on our six-second road clip.</p>
+            <p className="mt-1 text-ink-2">Record a walk in Seventy, upload a phone video, or run the whole pipeline on one of our sample walks.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/app/new" className="btn btn-primary">
               New survey
             </Link>
-            <Link href="/app/new?sample=1" className="btn btn-secondary">
-              Use our sample clip
+            <Link href="/app/new#samples" className="btn btn-secondary">
+              Run a sample walk
             </Link>
           </div>
         </section>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { DogGlyph } from "@/components/DogGlyph";
@@ -9,6 +10,7 @@ import { probeVideo, type Probe } from "@/lib/client/video";
 import { api, ensureWorkspace } from "@/lib/client/workspace";
 import { duration } from "@/lib/format";
 import { cleanFixes, distanceText, totalDistance, type Fix } from "@/lib/route";
+import { DEFAULT_TRY, findTryWalk, TRY_WALKS, type TryWalk } from "@/lib/tryWalks";
 import { CountryPicker } from "./CountryPicker";
 import { RecordWalk, type Recording } from "./RecordWalk";
 
@@ -109,6 +111,8 @@ export function NewWalkForm() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [source, setSource] = useState<Source | null>(null);
+  const [picked, setPicked] = useState<TryWalk | null>(null);
+  const fps = picked?.fps ?? FPS;
   const [route, setRoute] = useState<Fix[] | null>(null);
   const [recording, setRecording] = useState(false);
   const [probe, setProbe] = useState<Probe | null>(null);
@@ -125,6 +129,7 @@ export function NewWalkForm() {
     setProbe(null);
     setFile(f ?? null);
     setSource(f ? from : null);
+    if (from !== "sample") setPicked(null);
     setRoute(rec ? rec.route : null);
     if (!f) return;
     if (!/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name) && !f.type.startsWith("video/")) {
@@ -151,28 +156,33 @@ export function NewWalkForm() {
     }
   }
 
-  // A judge or a visitor without a walk video can run the real pipeline on one of ours.
-  async function loadSample() {
+  // Anyone without a walk video can run the real pipeline on one of ours, and check the count.
+  async function loadSample(walk: TryWalk) {
     setError(null);
     setProbing(true);
+    setPicked(walk);
     try {
-      const res = await fetch("/try/road-walk.mp4");
+      const res = await fetch(`/try/${walk.file}`);
       if (!res.ok) throw new Error();
-      const f = new File([await res.blob()], "road-walk-sample.mp4", { type: "video/mp4" });
-      setArea((a) => a || "City road, sample");
+      const f = new File([await res.blob()], `${walk.slug}-sample.mp4`, { type: "video/mp4" });
+      setArea(`${walk.title}, sample`);
+      setMode(walk.mode);
+      if (walk.mark) setMark(walk.mark);
       await choose(f, "sample");
     } catch {
       setProbing(false);
+      setPicked(null);
       setError("The sample walk couldn’t be loaded. Check the connection and try again.");
     }
   }
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("sample") === "1") {
-      const t = window.setTimeout(() => loadSample(), 0);
+    const asked = new URLSearchParams(window.location.search).get("sample");
+    if (asked) {
+      const t = window.setTimeout(() => loadSample(findTryWalk(asked === "1" ? DEFAULT_TRY : asked)), 0);
       return () => window.clearTimeout(t);
     }
-    // Runs once, on arrival from a "Use our sample clip" link.
+    // Runs once, on arrival from a link to a sample walk.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -199,7 +209,7 @@ export function NewWalkForm() {
           srcHeight: probe.height,
           srcFps: probe.fps,
           sourceName: file.name,
-          procFps: FPS,
+          procFps: fps,
           route: route && route.length >= 2 ? { points: route } : null,
         },
       });
@@ -213,14 +223,14 @@ export function NewWalkForm() {
   }
 
   const mapped = !!route && cleanFixes(route).length >= 2;
-  const frames = probe ? Math.round(probe.durationS * FPS) : 0;
+  const frames = probe ? Math.round(probe.durationS * fps) : 0;
   const pieces = probe ? Math.max(1, Math.ceil(probe.durationS / 30)) : 0;
   const minutes = probe ? Math.max(2, Math.round(1.5 + pieces * 0.15 + probe.durationS / 240)) : 0;
 
   return (
     <form onSubmit={submit} className="mt-12 space-y-12" noValidate>
       <Step n={1} title="Film or choose the walk" done={!!probe && !error}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <SourceCard
             active={source === "record"}
             onClick={() => setRecording(true)}
@@ -248,17 +258,36 @@ export function NewWalkForm() {
               </svg>
             }
           />
-          <SourceCard
-            active={source === "sample"}
-            onClick={loadSample}
-            disabled={probing || busy}
-            title="Use our sample clip"
-            body="Six seconds on a city road: two dogs and a passing rider."
-            // eslint-disable-next-line @next/next/no-img-element
-            art={<img src="/samples/road-walk.jpg" alt="" className="size-full object-cover" />}
-          />
         </div>
         <input ref={inputRef} type="file" accept="video/*" className="sr-only" aria-label="Walk video" onChange={(e) => choose(e.target.files?.[0], "upload")} />
+        <div className="mt-8" id="samples">
+          <h3 className="text-[0.9375rem] font-semibold">Or run a sample walk</h3>
+          <p className="mt-1 text-[0.9375rem] text-ink-2">No camera needed. It goes through the same models, and each one has an answer you can check.</p>
+          <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {TRY_WALKS.map((w) => (
+              <li key={w.slug}>
+                <button
+                  type="button"
+                  onClick={() => loadSample(w)}
+                  disabled={probing || busy}
+                  aria-pressed={picked?.slug === w.slug}
+                  className={`flex h-full w-full items-start gap-4 rounded-[18px] bg-surface p-4 text-left transition-shadow disabled:opacity-60 ${picked?.slug === w.slug ? "shadow-[inset_0_0_0_2px_var(--ink)]" : "shadow-[inset_0_0_0_1px_var(--line)] hover:shadow-[inset_0_0_0_1px_var(--ink-3)]"}`}
+                >
+                  <span className="relative size-16 shrink-0 overflow-hidden rounded-[12px] bg-canvas-2">
+                    <Image src={w.thumb} alt="" fill sizes="4rem" className="object-cover" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-semibold">{w.title}</span>
+                    <span className="num block text-[0.8125rem] font-semibold text-ink-2">
+                      {w.seconds} s, {w.known}
+                    </span>
+                    <span className="mt-1 block text-[0.875rem] leading-snug text-ink-2">{w.line}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
         {file && (
           <div className="mt-4 rounded-[18px] bg-canvas-2 px-5 py-4" aria-live="polite">
             <p className="truncate font-semibold">{file.name}</p>
@@ -279,6 +308,14 @@ export function NewWalkForm() {
                 Seventy will send {frames.toLocaleString("en-US")} frames in {pieces} {pieces === 1 ? "piece" : "pieces"}, counted at the same time. Expect about{" "}
                 {minutes} minutes.
               </p>
+            )}
+            {source === "sample" && picked && probe && !error && (
+              <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-line pt-3">
+                <button type="submit" className="btn btn-primary btn-sm disabled:opacity-40" disabled={busy}>
+                  {busy ? "Starting" : "Start counting"}
+                </button>
+                <span className="text-[0.9375rem] text-ink-2">The answer to check it against: {picked.known}.</span>
+              </div>
             )}
           </div>
         )}

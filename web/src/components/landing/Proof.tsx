@@ -91,7 +91,10 @@ export function Proof() {
         </ul>
         <p className="mt-6 max-w-3xl text-[0.875rem] text-ink-3">
           Each walk ran through the same pipeline as a full ten-minute survey. The hand labels, SAM 3.1’s boxes and the script that scores them are
-          public in the repository, and every change is scored again.
+          public in the repository, and every change is scored again.{" "}
+          <Link href="/app/new#samples" className="link font-semibold text-ink">
+            Run one yourself and check the count
+          </Link>
         </p>
       </div>
     </section>
