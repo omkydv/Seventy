@@ -14,9 +14,10 @@ Seventy is a survey tool for rabies vaccination teams. A phone video goes throug
 | Track | Indie, theme Build for Your World |
 | Built | From scratch, 28 October to 4 November 2026, inside the event, by one person. [Dated log](BUILD_LOG.md) |
 | 3-minute film | [youtu.be/MQQwoALKZkA](https://youtu.be/MQQwoALKZkA) |
-| Meta models | SAM 3.1, Muse Spark and Muse Wonder through the Meta Model API, in [seven jobs](#how-the-meta-models-are-used) |
-| Live app | [seventy-world.vercel.app](https://seventy-world.vercel.app) |
-| Start with no key | `git clone`, `npm install`, `npm run dev`. [Five finished surveys open](#run-it-yourself) with no key and no database |
+| Results | 28 of 28 dogs found on hand-counted videos, 100% precision and 97.5% recall in scored frames, about $2 a walk. [Scoring](eval/) |
+| Meta models | SAM 3.1, Muse Spark and Muse Wonder, called live at runtime through the Meta Model API, in [seven jobs](#how-the-meta-models-are-used) |
+| Try it live | [Run a sample walk](https://seventy-world.vercel.app/app/new): real Meta model calls on my API key, no login |
+| Run it yourself | Add your `MODEL_API_KEY`, then `npm install` and `npm run dev`. [Steps](#run-it-yourself) |
 | Bonus category | Best Creative Build: SAM 3.1's video tracking used as a street census, with SAM 3.1 and Muse Spark checking each other's readings |
 
 <p align="center">
@@ -33,7 +34,7 @@ A surveyor films a street with any phone. Seventy counts every dog once, reads e
 
 ## Check it yourself in 60 seconds
 
-Nothing to install. Each walk below has its answer written down before you run it. Open the link, press Start counting, and see if Seventy agrees. These are the real models, and the six-second walks take about a minute.
+Nothing to install. Each walk below has its answer written down before you run it. Open the link, press Start counting, and see if Seventy agrees. These are live calls to the real Meta models, on my API key, and the six-second walks take about a minute.
 
 | Walk | Length | The answer to check | Run it | The clip |
 |---|---:|---|---|---|
@@ -42,7 +43,7 @@ Nothing to install. Each walk below has its answer written down before you run i
 | Village lane | 16 s | 2 dogs, counted by hand | [Run](https://seventy-world.vercel.app/app/new?sample=village-lane) | [MP4](web/public/try/village-lane.mp4) |
 | Rainy street | 9 s | 2 dogs, both wearing collars | [Run](https://seventy-world.vercel.app/app/new?sample=rainy-street) | [MP4](web/public/try/rainy-street.mp4) |
 
-Or open a finished survey, with no model calls:
+Or open a finished survey, which shows the stored output of a real run:
 
 - [The mountain village square](https://seventy-world.vercel.app/app/demo). Press Play to watch SAM 3.1 count a pack of 13 dogs, each once, then open any dog.
 - [The walk from the film](https://seventy-world.vercel.app/app/walks/20dc6230-bdc1-4ed0-adde-cb06688aad41), with the go-back map, the report and every model call. The camera was fed stock footage and the GPS route is simulated, and the page says so. The counts, readings, report and costs are real model output.
@@ -95,7 +96,7 @@ Cities already pay to solve the counting half of this. In October 2026 San Anton
 
 Four street videos from four very different places, checked by hand. Every dog in each video was counted by hand, frame by frame on the original clip, then 28 frames were scored one dog at a time against SAM 3.1's boxes.
 
-Seventy found all 28 dogs and counted each one once. Every one of the 159 boxes SAM 3.1 drew in the checked frames was on a real dog.
+Seventy found all 28 dogs and counted each one once. Every one of the 159 boxes SAM 3.1 drew in the checked frames was on a real dog: 100% precision and 97.5% recall.
 
 | Video | Place | Dogs by hand | Seventy | What makes it hard |
 |---|---|---:|---:|---|
@@ -119,7 +120,7 @@ Four things from the runs that show how it behaves:
 
 - The dog we missed. We wrote two dogs on the City road clip. SAM 3.1 kept finding a third, so we looked at its close-ups: a real dog far down the road, 14 by 24 pixels. That clip isn't one of the four above, and you can [run it yourself](https://seventy-world.vercel.app/app/new?sample=city-road).
 - Repeats. When a track started after another ended, Muse Spark compared the two dogs' close-ups. It checked 5 such pairs across the four videos and merged none, and the hand count agrees: no dog was counted twice.
-- Two models disagreeing. On one mountain dog, SAM 3.1 took dark eyebrow spots for an ear tag. Muse Spark saw no tag. Under Seventy's rules neither answer counts for that dog, so one model's mistake can't become the result.
+- Two models disagreeing. On one mountain dog, SAM 3.1 took eyebrow spots for an ear tag. Muse Spark saw no tag. Under Seventy's rules neither answer counts for that dog, so one model's mistake can't become the result.
 - The smallest mark. A municipal ear tag about 25 pixels across sits on a dog far down the promenade. SAM 3.1's enlarged ear makes it visible to a person. Muse Spark called the ear "too blurry to judge tag or notch", so the rules said can't tell and didn't guess. A person looked at the enlarged ear and marked the dog, and [its card](https://seventy-world.vercel.app/app/walks/887a06c9-3011-48c2-83ea-8ed9214ec3fe) shows both the reading and the person's decision.
 
 ## How the Meta models are used
@@ -135,6 +136,8 @@ Seven jobs for three models. The calls are from the mountain village walk: 20 se
 | SAM 3.1 | Image segmentation | "collar", "ear tag" | Looks for the mark itself, as a second opinion on Muse Spark | 26 | One model's mistake becomes the result |
 | Muse Spark | Vision, comparison | Two dogs' close-ups | Same dog, different, or unsure, when a track starts after another ended | 3 | The same dog counted twice |
 | Muse Wonder | Reasoning with web search | The walk's numbers | Writes the report, with the WHO and national rules it uses, cited | 1 | Numbers without a decision |
+
+There is no mock mode. New walks always call the models, and finished surveys show the stored output of real runs.
 
 The browser uses Meta's SAM client libraries too: `@meta-sam/parser` reads SAM's output, and `@meta-sam/graphics` and `@meta-sam/video` draw the outlines, numbers and blur on every frame of the replay.
 
@@ -264,30 +267,24 @@ The same check scales from one surveyor on one morning, to every area of a city 
 
 ## Run it yourself
 
-You need Node 22 or later and Chrome or Edge. With no settings at all, Seventy runs in local mode, keeps everything in `web/.local-data/` on your machine, and opens with five finished surveys: the four samples and the walk from the film.
+You need Node 22 or later, Chrome or Edge, and a Meta Model API key. With no database settings, Seventy runs in local mode and keeps everything in `web/.local-data/` on your machine.
 
 ```bash
 git clone https://github.com/omkydv/Seventy.git
 cd Seventy/web
-npm install
-npm run dev     # http://localhost:3000
-```
-
-Open http://localhost:3000/app for the surveys, with every dog, its close-ups and readings, the replay and the report. This makes no model calls and needs no key.
-
-To count new walks, add a Meta Model API key, then restart:
-
-```bash
 cp ../.env.example .env.local   # then put your key in MODEL_API_KEY
+npm install
+npm run dev                     # http://localhost:3000
 ```
 
-Then open http://localhost:3000/app/new and pick a sample walk, upload any street video with dogs, or record a walk with the laptop's camera. In a recorded walk, the browser's location becomes the route on the map. SAM 3.1 gets each piece of video as an upload, since it can't fetch links from your machine. Delete `web/.local-data/` to start again from the samples.
+Then open http://localhost:3000/app/new and pick a sample walk, upload any street video with dogs, or record a walk with the laptop's camera. The whole pipeline runs on your key. In a recorded walk, the browser's location becomes the route on the map. SAM 3.1 gets each piece of video as an upload, since it can't fetch links from your machine. Delete `web/.local-data/` to start again from the samples.
+
+No key yet? http://localhost:3000/app still opens five finished surveys, showing the stored output of real model runs: every dog, its close-ups and readings, the replay, the report and the cost of each call. Counting a new walk needs the key, and the app says so.
 
 Or with Docker, from the repository's root. CI builds this image and checks it on every push.
 
 ```bash
-docker compose up --build                            # the finished surveys, no key
-MODEL_API_KEY=your-key docker compose up --build     # and new walks
+MODEL_API_KEY=your-key docker compose up --build     # http://localhost:3000
 ```
 
 To run it the way the live site does, with Supabase for the database and storage, also set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`, and apply the SQL files in `supabase/migrations/` in order.
@@ -310,7 +307,7 @@ npm run typecheck
 npm run build
 cd ..
 python eval/score.py                      # SAM 3.1 against the hand labels
-node --test tests/smoke-local.test.mjs    # the built app with no key: surveys, dogs, map, media
+node --test tests/smoke-local.test.mjs    # a fresh build: surveys, dogs, map, media
 ```
 
 The 34 unit tests cover the counting, stitching, statistics, mark rules and route maths. CI runs all of this on every push, starts the Docker image, and fails if the published evaluation numbers drift from the labels.
@@ -328,7 +325,7 @@ The 34 unit tests cover the counting, stitching, statistics, mark rules and rout
   - `src/components/WalkReplay.tsx` draws the replay, with labels and blur on every frame.
   - `src/components/WalkMap.tsx` draws the go-back map.
 - `eval/` is the frame-by-frame check of SAM 3.1's boxes: hand labels, SAM's boxes and the scoring script.
-- `tests/` starts a fresh build with no key and checks the surveys open.
+- `tests/` starts a fresh build and checks the surveys open.
 - `services/worker/` has Python tools for preparing sample walks offline.
 - `supabase/migrations/` is the database schema.
 - `Dockerfile` and `compose.yaml` run local mode in a container.
