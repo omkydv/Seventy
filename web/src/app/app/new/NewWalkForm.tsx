@@ -112,7 +112,6 @@ export function NewWalkForm() {
   const [file, setFile] = useState<File | null>(null);
   const [source, setSource] = useState<Source | null>(null);
   const [picked, setPicked] = useState<TryWalk | null>(null);
-  const fps = picked?.fps ?? FPS;
   const [route, setRoute] = useState<Fix[] | null>(null);
   const [recording, setRecording] = useState(false);
   const [probe, setProbe] = useState<Probe | null>(null);
@@ -209,7 +208,7 @@ export function NewWalkForm() {
           srcHeight: probe.height,
           srcFps: probe.fps,
           sourceName: file.name,
-          procFps: fps,
+          procFps: FPS,
           route: route && route.length >= 2 ? { points: route } : null,
         },
       });
@@ -223,7 +222,7 @@ export function NewWalkForm() {
   }
 
   const mapped = !!route && cleanFixes(route).length >= 2;
-  const frames = probe ? Math.round(probe.durationS * fps) : 0;
+  const frames = probe ? Math.round(probe.durationS * FPS) : 0;
   const pieces = probe ? Math.max(1, Math.ceil(probe.durationS / 30)) : 0;
   const minutes = probe ? Math.max(2, Math.round(1.5 + pieces * 0.15 + probe.durationS / 240)) : 0;
 

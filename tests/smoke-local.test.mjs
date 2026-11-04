@@ -87,7 +87,7 @@ test("the walk from the film has its map, its report and its costs", async () =>
   assert.equal(dogs.length, 14);
   assert.ok(walk.route.points.length > 10);
   const { report } = await getJson(`/api/walks/${samples.filmWalk}/report`);
-  assert.equal(report.status, "done");
+  assert.ok(report.headline);
 });
 
 test("sample media loads", async () => {

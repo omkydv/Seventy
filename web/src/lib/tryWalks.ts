@@ -13,8 +13,6 @@ export type TryWalk = {
   line: string;
   mode: "plan" | "check";
   mark?: "collar";
-  /** Frames a second to track, when the walk's hand-checked run used more than the usual five. */
-  fps?: number;
 };
 
 export const TRY_WALKS: TryWalk[] = [
@@ -47,17 +45,6 @@ export const TRY_WALKS: TryWalk[] = [
     known: "2 dogs, counted by hand",
     line: "A quiet lane, and a child passing who gets blurred.",
     mode: "plan",
-  },
-  {
-    slug: "mountain-village",
-    file: "mountain-village.mp4",
-    thumb: "/samples/mountain-village.jpg",
-    title: "Mountain village",
-    seconds: 20,
-    known: "13 dogs, counted by hand",
-    line: "A pack crossing a square, all around the camera.",
-    mode: "plan",
-    fps: 10,
   },
   {
     slug: "rainy-street",

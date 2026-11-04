@@ -31,7 +31,6 @@ Nothing to install. Each walk below has its answer written down before you run i
 | Market street | 6 s | 4 dogs, counted by hand | [Run](https://seventy-world.vercel.app/app/new?sample=market-street) | [MP4](web/public/try/market-street.mp4) |
 | City road | 6 s | 3 dogs, one of them 24 pixels tall | [Run](https://seventy-world.vercel.app/app/new?sample=city-road) | [MP4](web/public/try/road-walk.mp4) |
 | Village lane | 16 s | 2 dogs, counted by hand | [Run](https://seventy-world.vercel.app/app/new?sample=village-lane) | [MP4](web/public/try/village-lane.mp4) |
-| Mountain village | 20 s | 13 dogs, counted by hand | [Run](https://seventy-world.vercel.app/app/new?sample=mountain-village) | [MP4](web/public/try/mountain-village.mp4) |
 | Rainy street | 9 s | 2 dogs, both wearing collars | [Run](https://seventy-world.vercel.app/app/new?sample=rainy-street) | [MP4](web/public/try/rainy-street.mp4) |
 
 Or open a finished survey, with no model calls:
