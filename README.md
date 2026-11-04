@@ -2,7 +2,18 @@
 
 Rabies hides in the dogs a vaccination drive missed. Seventy finds them.
 
-[Live app](https://seventy-world.vercel.app) | [A finished survey](https://seventy-world.vercel.app/app/demo) | [Run the pipeline on a sample clip](https://seventy-world.vercel.app/app/new?sample=1) | [Frame-by-frame evaluation](eval/)
+[![CI](https://github.com/omkydv/Seventy/actions/workflows/ci.yml/badge.svg)](https://github.com/omkydv/Seventy/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-0c1a28)](LICENSE)
+[![Live app](https://img.shields.io/badge/live-seventy--world.vercel.app-12a85f)](https://seventy-world.vercel.app)
+
+| Submission | Meta Global AI Developer Hackathon 2026 |
+|---|---|
+| Track | Indie, theme Build for Your World |
+| Built | 28 October to 4 November 2026, inside the event, by one person. [Dated log](BUILD_LOG.md) |
+| Meta models | SAM 3.1, Muse Spark and Muse Wonder through the Meta Model API, in [seven jobs](#how-the-meta-models-are-used) |
+| Live app | [seventy-world.vercel.app](https://seventy-world.vercel.app) |
+| Start with no key | `git clone`, `npm install`, `npm run dev`. [Five finished surveys open](#run-it-yourself) with no key and no database |
+| Bonus category | Best Creative Build: SAM 3.1's video tracking used as a street census, with SAM 3.1 and Muse Spark checking each other's readings |
 
 <p align="center">
   <img src="docs/sam-tracking.gif" width="720" alt="A walk through a mountain village with each street dog outlined and numbered by SAM 3.1">
@@ -11,32 +22,47 @@ Rabies hides in the dogs a vaccination drive missed. Seventy finds them.
 
 A surveyor films a street with any phone. Seventy counts every dog once, reads each dog's vaccination mark, and tells the team whether the street reached the 70% of dogs vaccinated that stops rabies. Then it shows where the unvaccinated dogs are, so the team goes back to those streets and no others. Every number on the page opens to the dogs behind it.
 
-Built by one person for the Meta Global AI Developer Hackathon 2026, Indie track, theme Build for Your World. The seeing, reading and writing are done by three Meta models: SAM 3.1, Muse Spark and Muse Wonder.
+## Check it yourself in 60 seconds
 
-## A two-minute tour
+Nothing to install. Each walk below has its answer written down before you run it. Open the link, press Start counting, and see if Seventy agrees. These are the real models, and the six-second walks take about a minute.
 
-- Open [a finished survey](https://seventy-world.vercel.app/app/demo) and press Play to watch SAM 3.1 count a pack of 13 dogs, each once.
-- Follow [one dog through every model call](#one-dog-start-to-finish), with Muse Spark's real reading.
-- Check [the measured results](#measured-results) against the [hand-scored frames](eval/).
-- Run the whole pipeline yourself on [a six-second clip](https://seventy-world.vercel.app/app/new?sample=1). It takes about two minutes.
-- Or run it on your own machine with only a Meta Model API key and no database: [four commands](#run-it-yourself).
+| Walk | Length | The answer to check | Run it | The clip |
+|---|---:|---|---|---|
+| Market street | 6 s | 4 dogs, counted by hand | [Run](https://seventy-world.vercel.app/app/new?sample=market-street) | [MP4](web/public/try/market-street.mp4) |
+| City road | 6 s | 3 dogs, one of them 24 pixels tall | [Run](https://seventy-world.vercel.app/app/new?sample=city-road) | [MP4](web/public/try/road-walk.mp4) |
+| Village lane | 16 s | 2 dogs, counted by hand | [Run](https://seventy-world.vercel.app/app/new?sample=village-lane) | [MP4](web/public/try/village-lane.mp4) |
+| Mountain village | 20 s | 13 dogs, counted by hand | [Run](https://seventy-world.vercel.app/app/new?sample=mountain-village) | [MP4](web/public/try/mountain-village.mp4) |
+| Rainy street | 9 s | 2 dogs, both wearing collars | [Run](https://seventy-world.vercel.app/app/new?sample=rainy-street) | [MP4](web/public/try/rainy-street.mp4) |
+
+Or open a finished survey, with no model calls:
+
+- [The mountain village square](https://seventy-world.vercel.app/app/demo). Press Play to watch SAM 3.1 count a pack of 13 dogs, each once, then open any dog.
+- [The walk from the film](https://seventy-world.vercel.app/app/walks/20dc6230-bdc1-4ed0-adde-cb06688aad41), with the go-back map, the report and every model call. The camera was fed stock footage and the GPS route is simulated, and the page says so. The counts, readings, report and costs are real model output.
+
+## What it is, and what it is not
+
+Seventy is a coverage survey for teams that vaccinate or sterilize street dogs. It checks a drive. It doesn't run one.
+
+- It gives no medical advice. It says nothing about bites or treatment, and it doesn't diagnose a dog or a person.
+- It isn't a one-prompt image analyser. The count comes from video tracking across every frame, each reading from a fixed JSON schema, and every decision from plain, tested code.
+- It doesn't track people. SAM 3.1 looks for people only to blur them. Nobody is counted, named or matched across walks.
 
 ## The problem
 
-Rabies kills tens of thousands of people every year. Four in ten are children, and almost every case starts with a dog bite. Once symptoms begin it is almost always fatal, and every one of those deaths can be prevented with a vaccine ([WHO, 2026](https://www.who.int/news-room/fact-sheets/detail/rabies)).
+WHO counts 44,203 human rabies deaths a year. Four in ten are children, about 17,700 a year, and almost every case starts with a dog bite. Once symptoms begin it is almost always fatal, and every one of those deaths can be prevented with a vaccine ([WHO, 2026](https://www.who.int/news-room/fact-sheets/detail/rabies)).
 
-The fix is known. Vaccinate 70 of every 100 dogs in an area and the virus runs out of dogs to spread through. WHO and its partners have set 2030 as the year human deaths from dog rabies should end ([Zero by 30](https://www.who.int/publications/m/item/zero-by-30-the-global-strategic-plan-to-prevent-humandeaths-from-dog-transmitted-rabies-by-2030)).
+The fix is known. Vaccinate 70% of the dogs in an area and the virus runs out of dogs to spread through ([WHO South-East Asia](https://www.who.int/southeastasia/health-topics/rabies)). WHO and its partners have set 2030 as the year human deaths from dog rabies should end ([Zero by 30](https://www.who.int/publications/m/item/zero-by-30-the-global-strategic-plan-to-prevent-humandeaths-from-dog-transmitted-rabies-by-2030)).
 
 The weak step is checking. After a drive, surveyors walk the streets and tally marked and unmarked dogs on paper. The problems with that tally are well documented:
 
 - One 2025 campaign, measured three standard ways, came out at 47%, 32% and 19% coverage ([Frontiers in Microbiology, 2025](https://www.frontiersin.org/journals/microbiology/articles/10.3389/fmicb.2025.1696281/full)).
 - Street counts miss puppies, which are often too young to have been vaccinated, so coverage reads about 10% too high ([Frontiers in Veterinary Science, 2017](https://www.frontiersin.org/journals/veterinary-science/articles/10.3389/fvets.2017.00033/full)).
-- Two observers agree on a vaccination mark's colour barely better than chance ([Bothma et al.](https://pubmed.ncbi.nlm.nih.gov/26092723/)).
+- Mark colours were often misread, and agreement between observers on them was low, a kappa of 0.27 ([Conan et al., 2015](https://pubmed.ncbi.nlm.nih.gov/26092723/)).
 - The result is one number on a sheet. Nobody can check it afterwards.
 
 So a drive that missed 70% looks exactly like one that reached it, until someone is bitten.
 
-Cities already pay to solve the counting half of this. In October 2026 San Antonio paid about $99,000 for an AI count of its roaming dogs, filmed from city vehicles, after volunteer counts came back unreliable ([KSAT](https://www.ksat.com/news/local/2026/10/28/researchers-use-cell-phones-and-ai-to-count-loose-dogs-in-san-antonio/), [Southwest Research Institute](https://www.swri.org/what-we-do/internal-research-development/2024/automotive-transportation/city-of-san-antonio-rd-league-computer-vision-unrestrained-dog-census-10-r633004)). Rabies programmes in Asia and Africa have the same question and a fraction of that budget. Seventy answers it, vaccination coverage included, from the walk their teams already make, for about $2 of model time.
+Cities already pay to solve the counting half of this. In October 2026 San Antonio's animal services commissioned an AI count of its roaming dogs, a roughly $99,000 deal, using phones mounted in vehicle windows. Its last volunteer study had observation sheets come back blank and couldn't produce a statistically reliable number ([KSAT](https://www.ksat.com/news/local/2026/10/28/researchers-use-cell-phones-and-ai-to-count-loose-dogs-in-san-antonio/), [Southwest Research Institute](https://www.swri.org/what-we-do/internal-research-development/2024/automotive-transportation/city-of-san-antonio-rd-league-computer-vision-unrestrained-dog-census-10-r633004)). Rabies programmes in Asia and Africa have the same question and a fraction of that budget. Seventy answers it, vaccination coverage included, from the walk their teams already make, for about $2 of model time.
 
 ## What one walk gives the team
 
@@ -81,11 +107,12 @@ Seventy found all 28 dogs and counted each one once. Every one of the 159 boxes 
 
 The four sightings without a box are all the same dog, the one curled up dark against the promenade lawn, about 40 pixels long in a 1080 by 1920 frame. SAM 3.1 picks it up at 21.9 seconds, so it is counted. The hand labels, SAM's boxes, the scored frames and the scoring script are in [`eval/`](eval/), and CI scores them again on every push. You can [see every checked frame](web/public/eval/mountain-village.jpg) with SAM's boxes drawn on it.
 
-Three things from the runs that show how the rules behave:
+Four things from the runs that show how it behaves:
 
+- The dog we missed. We wrote two dogs on the City road clip. SAM 3.1 kept finding a third, so we looked at its close-ups: a real dog far down the road, 14 by 24 pixels. That clip isn't one of the four above, and you can [run it yourself](https://seventy-world.vercel.app/app/new?sample=city-road).
 - Repeats. When a track started after another ended, Muse Spark compared the two dogs' close-ups. It checked 5 such pairs across the four videos and merged none, and the hand count agrees: no dog was counted twice.
 - Two models disagreeing. On one mountain dog, SAM 3.1 took dark eyebrow spots for an ear tag. Muse Spark saw no tag. Under Seventy's rules neither answer counts for that dog, so one model's mistake can't become the result.
-- The smallest mark. A municipal ear tag about 25 pixels across sits on a dog far down the promenade. SAM 3.1's enlarged ear makes it visible. Muse Spark called the ear "too blurry to judge tag or notch" and the rules did not guess.
+- The smallest mark. A municipal ear tag about 25 pixels across sits on a dog far down the promenade. SAM 3.1's enlarged ear makes it visible to a person. Muse Spark called the ear "too blurry to judge tag or notch", so the rules said can't tell and didn't guess. A person looked at the enlarged ear and marked the dog, and [its card](https://seventy-world.vercel.app/app/walks/887a06c9-3011-48c2-83ea-8ed9214ec3fe) shows both the reading and the person's decision.
 
 ## How the Meta models are used
 
@@ -182,11 +209,17 @@ The parts of the design that matter most:
 - Stitching (`web/src/lib/tracks.ts`): objects in each two-second overlap are matched by mean box IoU of 0.35 or more, best matches first. A track shorter than 0.6 seconds counts only when SAM's confidence is 0.6 or higher.
 - The decisions live in plain, tested code, not in a prompt (`web/src/lib/marks.ts`, `web/src/lib/stats.ts`): the clear-view rule, two-model agreement, the Wilson interval, the ten-dog minimum, and doses as 70% of the count rounded up.
 - Route maths (`web/src/lib/route.ts`): GPS fixes worse than 35 m, or that would mean moving faster than 4 m/s, are dropped. Each dog's position is interpolated at the second it was first seen. Places to go back to are dogs within 40 m of each other, grouped in walking order. On the map, pins that would overlap are clustered by distance on screen and regrouped at every zoom.
-- Every model call is logged with its stage, frames or tokens, time and cost, so each survey shows what it cost. A per-workspace daily spend cap (`DAILY_SPEND_CAP_USD`) keeps a public demo from running up a bill.
+- Every model call is logged with its stage, frames or tokens, time and cost, so each survey shows what it cost. Daily spend caps, one per workspace and one for the whole public site, keep a demo from running up a bill.
 
 All three models are called through the Meta Model API (`api.meta.ai`), from the server in `web/src/lib/server/` (`sam.ts`, `marks.ts`, `ears.ts`, `repeats.ts`, `report.ts`). Stack: Next.js 16 and React 19 on Vercel, Supabase for the database and storage, Mediabunny for video in the browser, MapLibre with OpenFreeMap tiles for the map.
 
 ## Cost and time
+
+| One survey | Cost | Source |
+|---|---:|---|
+| San Antonio's AI count of one city's roaming dogs | about $99,000 | [KSAT](https://www.ksat.com/news/local/2026/10/28/researchers-use-cell-phones-and-ai-to-count-loose-dogs-in-san-antonio/) |
+| A street transect survey, per village | $12.01 | [Frontiers in Veterinary Science, 2017](https://www.frontiersin.org/journals/veterinary-science/articles/10.3389/fvets.2017.00033/full) |
+| Seventy, a ten-minute walk, model time | about $2 | The usage logs below |
 
 The mountain village walk, from its usage log:
 
@@ -203,14 +236,6 @@ The mountain village walk, from its usage log:
 
 All four sample videos together cost $0.65 before reports, and each report adds $0.12 to $0.55, depending on how much it searches. With the reports, the four surveys took 147 model calls. A ten-minute walk at five frames a second comes to about $2: $1.28 to track dogs and people, about $0.015 a dog for readings, and the report. SAM 3.1 tracked each sample in 30 to 75 seconds.
 
-## Privacy and safety
-
-- SAM 3.1 looks for people only to pixelate them inside their own outline, frame by frame. Nobody is counted, named or identified, and no person is matched across walks, in line with Meta's acceptable use policy.
-- The original video stays on the phone. Only a five-frames-a-second copy and the dogs' close-ups are uploaded.
-- Seventy measures dog vaccination coverage for programme teams. It gives no medical advice.
-- It never guesses. A dog too blurred to read is "can't tell" and is left out of the coverage. When the two models disagree, neither answer counts. With fewer than ten readable dogs there is no percentage.
-- Location is saved only for walks recorded in Seventy, and it is the phone's own route.
-
 ## Who uses it
 
 | Team | Their question | What one walk gives them |
@@ -221,53 +246,66 @@ All four sample videos together cost $0.65 before reports, and each report adds 
 
 The same check scales from one surveyor on one morning, to every area of a city drive checked within three days, to every district of a country measured the same way, so a ministry or a funder can open any number and see the dogs behind it.
 
-## Try it
+## Privacy and safety
 
-- Open a finished survey: [the mountain village square](https://seventy-world.vercel.app/app/demo). Press Play to watch SAM 3.1's tracks with the people blurred, then open any dog to see its close-ups and what was read on it.
-- Run the whole pipeline live on a six-second road clip: [open the sample](https://seventy-world.vercel.app/app/new?sample=1) and press Start counting. It takes about two minutes and costs a few cents.
-- On a phone, open [a new survey](https://seventy-world.vercel.app/app/new) and choose Record a walk. Allow the camera and location, film a street with dogs, and the results come with a map.
+- SAM 3.1 looks for people only to pixelate them inside their own outline, frame by frame. Nobody is counted, named or identified, and no person is matched across walks, in line with Meta's acceptable use policy.
+- The original video stays on the phone. Only a low-frame-rate copy and the dogs' close-ups are uploaded.
+- Seventy measures dog vaccination coverage for programme teams. It gives no medical advice.
+- It never guesses. A dog too blurred to read is "can't tell" and is left out of the coverage. When the two models disagree, neither answer counts. With fewer than ten readable dogs there is no percentage. When a person settles a dog, the card shows the person's decision next to the models' reading.
+- Location is saved only for walks recorded in Seventy, and it is the phone's own route.
 
 ## Run it yourself
 
-You need Node 22 or later, Chrome or Edge, and a Meta Model API key. Nothing else: with no database settings, Seventy runs in local mode and keeps everything in `web/.local-data/` on your machine, with the four sample surveys already loaded.
+You need Node 22 or later and Chrome or Edge. With no settings at all, Seventy runs in local mode, keeps everything in `web/.local-data/` on your machine, and opens with five finished surveys: the four samples and the walk from the film.
 
 ```bash
 git clone https://github.com/omkydv/Seventy.git
 cd Seventy/web
-cp ../.env.example .env.local   # then put your key in MODEL_API_KEY
 npm install
-npm run dev                     # http://localhost:3000
+npm run dev     # http://localhost:3000
 ```
 
-Then try it in this order:
+Open http://localhost:3000/app for the surveys, with every dog, its close-ups and readings, the replay and the report. This makes no model calls and needs no key.
 
-1. Open http://localhost:3000/app for the four sample surveys, with every dog, its close-ups and readings, the replay and the report. This makes no model calls.
-2. Open http://localhost:3000/app/new?sample=1 and press Start counting. The whole pipeline runs on a six-second road clip with your key: SAM 3.1 tracking dogs and people, the ear zoom, Muse Spark's readings and SAM's second opinion. It takes about two minutes and a few cents.
-3. Choose Upload a walk and give it any street video with dogs, or Record a walk to film with the laptop's camera. In a recorded walk, the browser's location becomes the route on the map.
+To count new walks, add a Meta Model API key, then restart:
 
-SAM 3.1 gets each piece of video as an upload, since it can't fetch links from your machine. Delete `web/.local-data/` to start again from the samples.
+```bash
+cp ../.env.example .env.local   # then put your key in MODEL_API_KEY
+```
+
+Then open http://localhost:3000/app/new and pick a sample walk, upload any street video with dogs, or record a walk with the laptop's camera. In a recorded walk, the browser's location becomes the route on the map. SAM 3.1 gets each piece of video as an upload, since it can't fetch links from your machine. Delete `web/.local-data/` to start again from the samples.
+
+Or with Docker, from the repository's root. CI builds this image and checks it on every push.
+
+```bash
+docker compose up --build                            # the finished surveys, no key
+MODEL_API_KEY=your-key docker compose up --build     # and new walks
+```
 
 To run it the way the live site does, with Supabase for the database and storage, also set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`, and apply the SQL files in `supabase/migrations/` in order.
 
 To prepare a walk offline and load it as a survey (needs Python 3.12, ffmpeg and Supabase):
 
 ```bash
-bash worker/tools/prepare_sample.sh walk.mp4 out/walk 10
-python worker/tools/reid.py out/walk
+bash services/worker/tools/prepare_sample.sh walk.mp4 out/walk 10
+python services/worker/tools/reid.py out/walk
 cd web && npx tsx scripts/seed-walk.ts ../out/walk --title "Village lane" --mode plan
 ```
 
-## Tests
+### Tests
 
 ```bash
 cd web
-npm test            # statistics, mark rules, second opinions, track stitching, route maths
+npm test              # statistics, mark rules, second opinions, track stitching, route maths
 npm run lint
 npm run typecheck
-cd .. && python eval/score.py   # SAM 3.1 against the hand labels
+npm run build
+cd ..
+python eval/score.py                      # SAM 3.1 against the hand labels
+node --test tests/smoke-local.test.mjs    # the built app with no key: surveys, dogs, map, media
 ```
 
-34 unit tests cover the counting, stitching, statistics, mark rules and route maths. CI runs all of it on every push, and fails if the published evaluation numbers drift from the labels.
+The 34 unit tests cover the counting, stitching, statistics, mark rules and route maths. CI runs all of this on every push, starts the Docker image, and fails if the published evaluation numbers drift from the labels.
 
 ## Repo map
 
@@ -282,8 +320,11 @@ cd .. && python eval/score.py   # SAM 3.1 against the hand labels
   - `src/components/WalkReplay.tsx` draws the replay, with labels and blur on every frame.
   - `src/components/WalkMap.tsx` draws the go-back map.
 - `eval/` is the frame-by-frame check of SAM 3.1's boxes: hand labels, SAM's boxes and the scoring script.
-- `worker/` has Python tools for preparing sample walks offline.
+- `tests/` starts a fresh build with no key and checks the surveys open.
+- `services/worker/` has Python tools for preparing sample walks offline.
 - `supabase/migrations/` is the database schema.
+- `Dockerfile` and `compose.yaml` run local mode in a container.
+- [`BUILD_LOG.md`](BUILD_LOG.md) is the dated record of the build.
 
 ## What comes next
 
@@ -292,21 +333,20 @@ Uploading later when the signal comes back. The app in the languages surveyors s
 ## Sources
 
 - [WHO rabies fact sheet, 2026](https://www.who.int/news-room/fact-sheets/detail/rabies)
+- [WHO South-East Asia: rabies, and 70% dog vaccination coverage](https://www.who.int/southeastasia/health-topics/rabies)
 - [Zero by 30: the global strategic plan to end human deaths from dog-mediated rabies by 2030](https://www.who.int/publications/m/item/zero-by-30-the-global-strategic-plan-to-prevent-humandeaths-from-dog-transmitted-rabies-by-2030)
 - [Three ways to measure one campaign's coverage, Frontiers in Microbiology, 2025](https://www.frontiersin.org/journals/microbiology/articles/10.3389/fmicb.2025.1696281/full)
 - [Comparing coverage surveys, and the puppies street counts miss, Frontiers in Veterinary Science, 2017](https://www.frontiersin.org/journals/veterinary-science/articles/10.3389/fvets.2017.00033/full)
-- [Short-term marking of dogs for rabies control, Bothma et al.](https://pubmed.ncbi.nlm.nih.gov/26092723/)
+- [Evaluation of methods for short-term marking of dogs for rabies control, Conan et al., 2015](https://pubmed.ncbi.nlm.nih.gov/26092723/)
 - [San Antonio's AI count of loose dogs, KSAT, 28 October 2026](https://www.ksat.com/news/local/2026/10/28/researchers-use-cell-phones-and-ai-to-count-loose-dogs-in-san-antonio/)
 - [The San Antonio unrestrained dog census, Southwest Research Institute](https://www.swri.org/what-we-do/internal-research-development/2024/automotive-transportation/city-of-san-antonio-rd-league-computer-vision-unrestrained-dog-census-10-r633004)
 
-## Footage and photographs
-
-The street videos are from Pexels and used under the Pexels License. The photographs on the landing page are from Pexels and Unsplash, credited on the page. Every person in the replays is pixelated.
-
 ## Third-party code and assets
 
-All of Seventy's code was written during the event; no code from earlier projects is included. It uses open-source libraries, listed in `web/package.json`: Next.js, React, the Supabase client, Mediabunny, MapLibre and Meta's `@meta-sam` packages. Map tiles come from OpenFreeMap, with data from OpenStreetMap contributors. The sample street videos are used under the Pexels License, and the landing page photographs under the Pexels and Unsplash licenses, each credited on the page.
+All of Seventy's code was written during the event; no code from earlier projects is included. It uses open-source libraries, listed in `web/package.json`: Next.js, React, the Supabase client, Mediabunny, MapLibre and Meta's `@meta-sam` packages. Map tiles come from OpenFreeMap, with data from OpenStreetMap contributors.
 
-## Built during the hackathon
+The street videos in this repository are from Pexels and used under the Pexels License. The photographs on the landing page are from Pexels and Unsplash, credited on the page. Every person in the replays is pixelated. The demo film also uses one clip from Pixabay, which isn't in this repository, and music and sound from Mixkit and Pixabay.
 
-All the code here was written between 26 October and 4 November 2026, by one person in a rural village, with a laptop and a phone.
+## License
+
+The code is under the [MIT License](LICENSE). The street videos and photographs stay under their own licenses and aren't covered by it.
