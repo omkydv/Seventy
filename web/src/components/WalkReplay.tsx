@@ -305,7 +305,11 @@ export function WalkReplay({
       player.on("play", () => setPlaying(true)),
       player.on("pause", () => setPlaying(false)),
       player.on("ended", () => setPlaying(false)),
-      player.on("error", ({ error }) => setError(error instanceof Error ? error.message : String(error))),
+      // Seeking to the very edge of a piece can land between packets; playback carries on, so it isn't worth a message.
+      player.on("error", ({ error }) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes("No video packet")) setError(message);
+      }),
     ];
     playerRef.current = player;
     rendererRef.current = renderer;
