@@ -27,7 +27,7 @@ export function Proof() {
             Four real street videos, checked by hand.
           </h2>
           <p className="lede col-span-12 self-end lg:col-span-6">
-            A mountain village, a seaside town, a city market and a village lane. A person counted every dog without looking at Seventy’s answer, then
+            A mountain village, a seaside town, a city market and a village lane. A person counted every dog by hand, frame by frame, then
             checked {t.frames} frames one dog at a time against SAM 3.1’s boxes. Open any walk and check its work.
           </p>
         </div>

@@ -2,18 +2,27 @@
 
 Rabies hides in the dogs a vaccination drive missed. Seventy finds them.
 
+Seventy is a survey tool for rabies vaccination teams. A phone video goes through a multi-model pipeline (SAM 3.1, Muse Spark and Muse Wonder), and the rules that turn readings into a result live in plain, tested code, not in a prompt. It gives no medical advice.
+
 [![CI](https://github.com/omkydv/Seventy/actions/workflows/ci.yml/badge.svg)](https://github.com/omkydv/Seventy/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0c1a28)](LICENSE)
 [![Live app](https://img.shields.io/badge/live-seventy--world.vercel.app-12a85f)](https://seventy-world.vercel.app)
+[![Film](https://img.shields.io/badge/film-3%20minutes-0c1a28)](https://youtu.be/MQQwoALKZkA)
 
 | Submission | Meta Global AI Developer Hackathon 2026 |
 |---|---|
 | Track | Indie, theme Build for Your World |
-| Built | 28 October to 4 November 2026, inside the event, by one person. [Dated log](BUILD_LOG.md) |
+| Built | From scratch, 28 October to 4 November 2026, inside the event, by one person. [Dated log](BUILD_LOG.md) |
+| 3-minute film | [youtu.be/MQQwoALKZkA](https://youtu.be/MQQwoALKZkA) |
 | Meta models | SAM 3.1, Muse Spark and Muse Wonder through the Meta Model API, in [seven jobs](#how-the-meta-models-are-used) |
 | Live app | [seventy-world.vercel.app](https://seventy-world.vercel.app) |
 | Start with no key | `git clone`, `npm install`, `npm run dev`. [Five finished surveys open](#run-it-yourself) with no key and no database |
 | Bonus category | Best Creative Build: SAM 3.1's video tracking used as a street census, with SAM 3.1 and Muse Spark checking each other's readings |
+
+<p align="center">
+  <a href="https://youtu.be/MQQwoALKZkA"><img src="web/public/film-still.jpg" width="720" alt="A frame from the film: SAM 3.1 outlines twelve dogs on a mountain village street and counts each one once. Click to watch."></a>
+</p>
+<p align="center"><a href="https://youtu.be/MQQwoALKZkA"><b>Watch the 3-minute film</b></a></p>
 
 <p align="center">
   <img src="docs/sam-tracking.gif" width="720" alt="A walk through a mountain village with each street dog outlined and numbered by SAM 3.1">
@@ -84,7 +93,7 @@ Cities already pay to solve the counting half of this. In October 2026 San Anton
 
 ## Measured results
 
-Four street videos from four very different places, checked by hand. Every dog in each video was counted without looking at Seventy's answer, then 28 frames were scored one dog at a time against SAM 3.1's boxes.
+Four street videos from four very different places, checked by hand. Every dog in each video was counted by hand, frame by frame on the original clip, then 28 frames were scored one dog at a time against SAM 3.1's boxes.
 
 Seventy found all 28 dogs and counted each one once. Every one of the 159 boxes SAM 3.1 drew in the checked frames was on a real dog.
 
