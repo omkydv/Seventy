@@ -1,0 +1,12 @@
+services:
+  seventy:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+    volumes:
+      - seventy-data:/app/web/.local-data
+
+volumes:
+  seventy-data:

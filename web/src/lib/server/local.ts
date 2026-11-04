@@ -12,7 +12,7 @@ import seed from "@/content/local-seed.json";
  */
 export const LOCAL = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY;
 
-const DIR = path.join(process.cwd(), ".local-data");
+const DIR = process.env.LOCAL_DATA_DIR || path.join(process.cwd(), ".local-data");
 const FILES = path.join(DIR, "files");
 const DB_FILE = path.join(DIR, "db.json");
 

@@ -1,0 +1,12 @@
+.git
+.github
+**/node_modules
+**/.next
+**/.local-data
+**/.env*
+**/.venv
+docs
+eval
+services
+supabase
+tests
