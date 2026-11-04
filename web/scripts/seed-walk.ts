@@ -1,5 +1,5 @@
 /**
- * Load a walk that was processed offline (worker/tools/prepare_sample.sh, then reid.py) into
+ * Load a walk that was processed offline (services/worker/tools/prepare_sample.sh, then reid.py) into
  * the database as a sample survey, with its real SAM output, close-ups, readings and costs.
  *
  *   npx tsx scripts/seed-walk.ts <walk_dir> --title "Mountain village square" --programme "Field samples" \

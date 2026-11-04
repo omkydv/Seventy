@@ -21,10 +21,10 @@ import httpx
 import numpy as np
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 load_dotenv(ROOT / ".env.local")
-sys.path.insert(0, str(ROOT / "worker"))
-sys.path.insert(0, str(ROOT / "worker" / "tools"))
+sys.path.insert(0, str(ROOT / "services" / "worker"))
+sys.path.insert(0, str(ROOT / "services" / "worker" / "tools"))
 
 from annotate_frames import BOX  # noqa: E402
 from seventy import sam  # noqa: E402

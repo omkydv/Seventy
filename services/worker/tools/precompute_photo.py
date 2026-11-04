@@ -16,9 +16,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 from PIL import Image
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 load_dotenv(ROOT / ".env.local")
-sys.path.insert(0, str(ROOT / "worker"))
+sys.path.insert(0, str(ROOT / "services" / "worker"))
 
 from seventy import sam  # noqa: E402
 
