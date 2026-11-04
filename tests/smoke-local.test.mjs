@@ -1,4 +1,4 @@
-// A fresh build with no key and no database, the way someone first meets it. Every sample survey
+// A fresh build with no settings, the way someone first meets it. Every sample survey
 // has to open with its hand-checked dogs, the walk from the film has to have its map, and every
 // sample walk's clip and picture have to be there.
 //
@@ -88,6 +88,17 @@ test("the walk from the film has its map, its report and its costs", async () =>
   assert.ok(walk.route.points.length > 10);
   const { report } = await getJson(`/api/walks/${samples.filmWalk}/report`);
   assert.ok(report.headline);
+});
+
+test("a new walk on a copy with no key says how to add one", async () => {
+  const ws = await (await fetch(`${base}/api/workspace`, { method: "POST" })).json();
+  const res = await fetch(`${base}/api/walks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-seventy-workspace": `${ws.id}.${ws.token}` },
+    body: JSON.stringify({ mode: "plan", durationS: 6, srcWidth: 1280, srcHeight: 720 }),
+  });
+  assert.equal(res.status, 400);
+  assert.match(await res.text(), /MODEL_API_KEY/);
 });
 
 test("sample media loads", async () => {

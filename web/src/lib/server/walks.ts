@@ -86,6 +86,9 @@ export async function checkBudget(ws: Workspace, estimate: number) {
 }
 
 export async function createWalk(ws: Workspace, input: WalkInput) {
+  if (!env.hasModelKey) {
+    throw new UserError("This copy has no Meta API key, so it can’t run the models yet. Set MODEL_API_KEY in web/.env.local and restart, or run this walk on the live app: seventy-world.vercel.app/app/new");
+  }
   if (!(input.durationS > 0)) throw new UserError("That video has no length. Try exporting it again.");
   if (input.durationS > 20 * 60) throw new UserError("Walks can be up to 20 minutes. Split longer recordings.");
   const procFps = input.procFps ?? 5;

@@ -1,5 +1,5 @@
 # Seventy in local mode: no database, data kept in /app/web/.local-data.
-# The sample surveys open with no key. Set MODEL_API_KEY to count new walks.
+# Set MODEL_API_KEY to run the models. Without it, the finished surveys still open.
 FROM node:22-slim
 
 WORKDIR /app/web

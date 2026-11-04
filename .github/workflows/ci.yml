@@ -34,8 +34,8 @@ jobs:
       - name: The published numbers match the labels
         run: git diff --exit-code eval/results.json web/src/content/eval.json
 
-  no-key:
-    name: Fresh build, no key
+  fresh-build:
+    name: Fresh build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

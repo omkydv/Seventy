@@ -10,6 +10,9 @@ export const env = {
   get modelKey() {
     return required("MODEL_API_KEY");
   },
+  get hasModelKey() {
+    return Boolean(process.env.MODEL_API_KEY);
+  },
   get modelBase() {
     return process.env.MODEL_API_BASE ?? "https://api.meta.ai/v1";
   },
