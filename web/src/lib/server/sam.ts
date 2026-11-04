@@ -31,6 +31,11 @@ export async function submitVideoJob(opts: {
   loadBytes: () => Promise<Uint8Array>;
   filename: string;
 }): Promise<{ responseId: string; via: "url" | "file" }> {
+  // A link Meta's servers can't reach (local mode runs on this machine): send the bytes instead.
+  if (!/^https:\/\//.test(opts.videoUrl)) {
+    const fileId = await uploadFile(await opts.loadBytes(), opts.filename, "video/mp4");
+    return { responseId: (await createResponse(videoRequest(opts.concept, { file_id: fileId }))).id, via: "file" };
+  }
   try {
     const job = await createResponse(videoRequest(opts.concept, { video_url: opts.videoUrl }));
     return { responseId: job.id, via: "url" };

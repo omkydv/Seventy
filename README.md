@@ -19,6 +19,7 @@ Built by one person for the Meta Global AI Developer Hackathon 2026, Indie track
 - Follow [one dog through every model call](#one-dog-start-to-finish), with Muse Spark's real reading.
 - Check [the measured results](#measured-results) against the [hand-scored frames](eval/).
 - Run the whole pipeline yourself on [a six-second clip](https://seventy-world.vercel.app/app/new?sample=1). It takes about two minutes.
+- Or run it on your own machine with only a Meta Model API key and no database: [four commands](#run-it-yourself).
 
 ## The problem
 
@@ -183,7 +184,7 @@ The parts of the design that matter most:
 - Route maths (`web/src/lib/route.ts`): GPS fixes worse than 35 m, or that would mean moving faster than 4 m/s, are dropped. Each dog's position is interpolated at the second it was first seen. Places to go back to are dogs within 40 m of each other, grouped in walking order. On the map, pins that would overlap are clustered by distance on screen and regrouped at every zoom.
 - Every model call is logged with its stage, frames or tokens, time and cost, so each survey shows what it cost. A per-workspace daily spend cap (`DAILY_SPEND_CAP_USD`) keeps a public demo from running up a bill.
 
-Stack: Next.js 16 and React 19 on Vercel, Supabase for the database and storage, Mediabunny for video in the browser, MapLibre with OpenFreeMap tiles for the map.
+All three models are called through the Meta Model API (`api.meta.ai`), from the server in `web/src/lib/server/` (`sam.ts`, `marks.ts`, `ears.ts`, `repeats.ts`, `report.ts`). Stack: Next.js 16 and React 19 on Vercel, Supabase for the database and storage, Mediabunny for video in the browser, MapLibre with OpenFreeMap tiles for the map.
 
 ## Cost and time
 
@@ -228,18 +229,27 @@ The same check scales from one surveyor on one morning, to every area of a city 
 
 ## Run it yourself
 
-Needs Node 22 or later, a Supabase project and a Meta Model API key. The offline tools in `worker/` also need Python 3.12 and ffmpeg.
+You need Node 22 or later, Chrome or Edge, and a Meta Model API key. Nothing else: with no database settings, Seventy runs in local mode and keeps everything in `web/.local-data/` on your machine, with the four sample surveys already loaded.
 
 ```bash
-cd web
-cp ../.env.example .env.local   # MODEL_API_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY
+git clone https://github.com/omkydv/Seventy.git
+cd Seventy/web
+cp ../.env.example .env.local   # then put your key in MODEL_API_KEY
 npm install
 npm run dev                     # http://localhost:3000
 ```
 
-Apply the SQL files in `supabase/migrations/` to the Supabase project, in order.
+Then try it in this order:
 
-To prepare a walk offline and load it as a survey:
+1. Open http://localhost:3000/app for the four sample surveys, with every dog, its close-ups and readings, the replay and the report. This makes no model calls.
+2. Open http://localhost:3000/app/new?sample=1 and press Start counting. The whole pipeline runs on a six-second road clip with your key: SAM 3.1 tracking dogs and people, the ear zoom, Muse Spark's readings and SAM's second opinion. It takes about two minutes and a few cents.
+3. Choose Upload a walk and give it any street video with dogs, or Record a walk to film with the laptop's camera. In a recorded walk, the browser's location becomes the route on the map.
+
+SAM 3.1 gets each piece of video as an upload, since it can't fetch links from your machine. Delete `web/.local-data/` to start again from the samples.
+
+To run it the way the live site does, with Supabase for the database and storage, also set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`, and apply the SQL files in `supabase/migrations/` in order.
+
+To prepare a walk offline and load it as a survey (needs Python 3.12, ffmpeg and Supabase):
 
 ```bash
 bash worker/tools/prepare_sample.sh walk.mp4 out/walk 10

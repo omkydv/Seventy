@@ -36,3 +36,6 @@ Thumbs.db
 !web/public/hero/*.mp4
 !web/public/try/*.mp4
 !web/public/m/**/*.mp4
+
+# local mode data
+web/.local-data/

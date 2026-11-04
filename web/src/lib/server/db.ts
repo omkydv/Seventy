@@ -2,11 +2,14 @@ import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { env } from "./env";
+import { LOCAL, localClient } from "./local";
 
 let client: SupabaseClient | null = null;
 
 /** Service client. Bypasses row-level security, so it never leaves the server. */
 export function db(): SupabaseClient {
+  // No Supabase settings: run on local files, so the app needs only a Meta Model API key.
+  if (LOCAL) return localClient as unknown as SupabaseClient;
   if (!client) {
     client = createClient(env.supabaseUrl, env.supabaseSecret, {
       auth: { persistSession: false, autoRefreshToken: false },
