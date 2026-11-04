@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import samples from "@/content/samples.json";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { recallFile, rememberFile } from "@/lib/client/files";
 import { uploadSigned } from "@/lib/client/storage";
@@ -247,6 +248,9 @@ export function WalkView({ id }: { id: string }) {
           {kind}, {day(w.recorded_at ?? w.created_at)}, {duration(w.duration_s)} of video
         </p>
       </header>
+      {w.id === samples.filmWalk && (
+        <p className="mt-3 max-w-3xl text-[0.9375rem] text-ink-2">The walk from the demo film. The camera was fed stock footage and the GPS route is simulated, so the street map is only a stand-in. Every count, reading, report and cost here is real model output.</p>
+      )}
 
       {needFile && owner && (
         <div className="panel mt-8 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">

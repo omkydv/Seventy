@@ -1,5 +1,6 @@
 {
   "note": "Measured on Oct 30 and 31, 2026. Hand counts were made frame by frame on the original clips. Costs are from the usage log of each sample survey and cover the whole pipeline except the written report.",
+  "filmWalk": "20dc6230-bdc1-4ed0-adde-cb06688aad41",
   "samples": [
     {
       "slug": "mountain-village",
@@ -23,7 +24,7 @@
       "seconds": 22,
       "seventy": 9,
       "hand": 9,
-      "line": "One street dog carries a municipal ear tag, about 25 pixels across, made readable by SAM 3.1’s enlarged close-up of its ear.",
+      "line": "One street dog carries a municipal ear tag, about 25 pixels across, made visible by SAM 3.1’s enlarged close-up of its ear.",
       "cost": 0.206,
       "samSeconds": 74,
       "found": "Includes a dark dog curled up far across the lawn, which SAM 3.1 picks up in the clip’s last second."

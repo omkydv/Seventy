@@ -4,8 +4,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CoverageMeter } from "@/components/CoverageMeter";
 import { DOG_PATH, DogGlyph } from "@/components/DogGlyph";
 import Image from "next/image";
+import Link from "next/link";
 import { SamPhoto } from "@/components/SamPhoto";
 import report from "@/content/report-sample.json";
+import samples from "@/content/samples.json";
 import { MarketReplay } from "./MarketReplay";
 
 export type HowData = {
@@ -75,10 +77,10 @@ function EarTagVisual() {
           </div>
           <div>
             <p className="text-[#6e7f91]">Dog 4</p>
-            <p className="font-semibold text-mark-strong">Vaccinated</p>
+            <p className="font-semibold text-mark-strong">Marked, by a person</p>
           </div>
         </div>
-        <p className="mt-3 text-[0.875rem] text-[#3d4f63]">A municipal ear tag on a dog far down a seaside promenade, too small to see until SAM 3.1 found the ear and enlarged it.</p>
+        <p className="mt-3 text-[0.875rem] text-[#3d4f63]">A municipal ear tag on a dog far down a seaside promenade, too small to see until SAM 3.1 found the ear and enlarged it. Muse Spark called it too blurry to judge, and Seventy didn’t guess. A person settled it in one look.</p>
       </div>
     </div>
   );
@@ -219,7 +221,7 @@ function ReportVisual() {
 }
 
 /** `flow` visuals are panels of text and figures: on phones they take their own height instead of a photo frame. */
-type Step = { title: string; body: ReactNode; meta: string; visual: ReactNode; flow?: boolean };
+type Step = { title: string; body: ReactNode; meta: ReactNode; visual: ReactNode; flow?: boolean };
 
 export function HowItWorks({ data }: { data: HowData }) {
   const steps: Step[] = [
@@ -252,7 +254,14 @@ export function HowItWorks({ data }: { data: HowData }) {
     {
       title: "Go back where dogs were missed",
       body: "On a recorded walk, every dog sits on a map where it was first seen. The dogs still to vaccinate are grouped into places along the route, each with walking directions, and the list goes to the team’s chat in one tap. The mop-up goes only where it is needed.",
-      meta: "An illustration of the go-back map. In the app it is drawn on real streets, from the phone’s GPS.",
+      meta: (
+        <>
+          An illustration of the go-back map. In the app it is drawn on real streets, from the phone’s GPS.{" "}
+          <Link href={`/app/walks/${samples.filmWalk}#goback`} className="link font-semibold text-ink">
+            Open the real map
+          </Link>
+        </>
+      ),
       visual: <GoBackVisual />,
       flow: true,
     },
