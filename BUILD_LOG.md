@@ -51,5 +51,9 @@ A dated record of the build, taken from this repository's own history. Dates are
 - [`6fc4beb`](https://github.com/omkydv/Seventy/commit/6fc4beb) Add build log
 - [`38b98fa`](https://github.com/omkydv/Seventy/commit/38b98fa) Save unsure repeat pairs in production
 - [`30cebf5`](https://github.com/omkydv/Seventy/commit/30cebf5) Link the film
+- [`a5f873e`](https://github.com/omkydv/Seventy/commit/a5f873e) Update build log
+- [`5260bb8`](https://github.com/omkydv/Seventy/commit/5260bb8) Explain a missing API key
+- [`4dac897`](https://github.com/omkydv/Seventy/commit/4dac897) Apply the mark rules to Mountain Dog 1
+- [`2861a31`](https://github.com/omkydv/Seventy/commit/2861a31) Lead the README with the API key and results
 
 The checks behind the published numbers are here too: the hand labels and scoring are in [`eval/`](eval/), and CI scores them again on every push.
