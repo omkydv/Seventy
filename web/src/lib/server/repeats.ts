@@ -113,7 +113,7 @@ export async function checkRepeats(walkId: string, log: (row: { stage: string; m
   if (unsure.length) {
     await db()
       .from("matches")
-      .insert(unsure.map((r) => ({ area_id: null, dog_a: r.a.id, dog_b: r.b.id, similarity: r.v.confidence, verdict: "unsure", verified_by: MARK_MODEL, reason: r.v.reason })));
+      .insert(unsure.map((r) => ({ area_id: null, dog_a: r.a.id, dog_b: r.b.id, similarity: r.v.confidence, verdict: "unsure", verified_by: "model", reason: r.v.reason })));
   }
   await log({ stage: "Check for repeats", model: MARK_MODEL, units: usage.units, unit: "tokens", calls: results.length, seconds: usage.ms / 1000, cost_usd: usage.cost });
 }
