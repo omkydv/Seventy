@@ -48,5 +48,8 @@ A dated record of the build, taken from this repository's own history. Dates are
 - [`41248a6`](https://github.com/omkydv/Seventy/commit/41248a6) Add MIT license, Docker and a no-key test
 - [`b59bbf0`](https://github.com/omkydv/Seventy/commit/b59bbf0) Rewrite README
 - [`ee5ba5d`](https://github.com/omkydv/Seventy/commit/ee5ba5d) Drop the mountain sample card
+- [`6fc4beb`](https://github.com/omkydv/Seventy/commit/6fc4beb) Add build log
+- [`38b98fa`](https://github.com/omkydv/Seventy/commit/38b98fa) Save unsure repeat pairs in production
+- [`30cebf5`](https://github.com/omkydv/Seventy/commit/30cebf5) Link the film
 
 The checks behind the published numbers are here too: the hand labels and scoring are in [`eval/`](eval/), and CI scores them again on every push.
